@@ -100,7 +100,7 @@ Phase 4.5 is a blocking gate: every unchecked question gets presented to you bef
 
 Checks for required skills (`ralph-tui-prd`, `compound-agents`, `last30days`), plugins (`everything-claude-code`, `choo-choo-ralph`, `compound-engineering`), and CLIs (`ralph-tui`, `bd`, `br`). Auto-installs what it can, warns about the rest.
 
-Also initializes git if not already in a repo and registers the compaction hook.
+Also initializes git if not already in a repo, creates a proper `.gitignore` (pipeline state, ralph-tui iterations, node_modules, env files, OS files, etc.), initializes `.ralph-tui/config.toml` with default config if missing, and registers the compaction hook.
 
 ### Phase 0: Orient
 
