@@ -28,7 +28,7 @@ Chain the complete Ralph workflow from idea to shipped, reviewed, harvested code
       ↓
 [5. CONVERT]   ← beads (bd/br) or prd.json
       ↓
-[6. PAUSE]     ← Manual ralph-tui execution
+[6. EXECUTE]   ← Manual or headless bead execution
       ↓          ← GATE: done running?
 [7. REVIEW]    ← Compound review with selected agents
       ↓          ← GATE: fix P1s or proceed?
@@ -91,17 +91,66 @@ completed: true
 ...actual phase output...
 ```
 
-### Phase Protocol (EVERY phase must follow this)
+### Orchestration Model: Thin Main Agent + Subagent Per Phase
 
-1. **Read** `state.md` — know current phase + all prior decisions
-2. **Read** previous phase file — verify its `completed: true`
-3. **Write** this phase's file with `completed: false`
-4. Do the work; append questions to `open-questions.md` if any arise
-5. **Update** phase file with results + `completed: true`
+**The main agent is a lightweight orchestrator.** It does NOT do phase work itself. Instead it:
+
+1. Reads `state.md` to know current phase
+2. Spawns a **Task subagent** for the current phase, passing only the files that phase needs
+3. Waits for the subagent to finish
+4. Verifies the phase output file exists and has `completed: true`
+5. Runs the user gate (AskUserQuestion)
+6. Moves to next phase
+
+**Why:** Research, PRD creation, deepening, and review phases generate massive context. Running them all in the main agent overflows the context window. Subagents get a fresh context per phase and only the files they need.
+
+**Exception:** Phase 1 (Clarify) stays in the main agent because it requires interactive AskUserQuestion rounds.
+
+### Subagent Dispatch Pattern
+
+For each phase, the main agent does:
+
+```
+1. Read .claude/pipeline/state.md
+2. Read the previous phase file (verify completed: true)
+3. Spawn Task subagent:
+   - subagent_type: "general-purpose"
+   - prompt: phase instructions + "Read these files for context: [list]"
+   - The subagent reads its input files, does the work, writes its output file
+4. After subagent returns:
+   - Read the phase output file, verify completed: true
+   - Update state.md → increment current_phase
+   - Run the gate (AskUserQuestion)
+```
+
+### What Each Subagent Receives
+
+| Phase | Input files | Output file |
+|-------|------------|-------------|
+| 0 Orient | state.md | phase-0-orient.md |
+| 2 Research | state.md, phase-1-clarify.md, phase-0-orient.md | phase-2-research.md |
+| 3 PRD | state.md, phase-2-research.md, phase-0-orient.md | phase-3-prd.md |
+| 4 Deepen | state.md, phase-3-prd.md | phase-4-deepen.md |
+| 4.5 Resolve | state.md, open-questions.md, phase-4-deepen.md | phase-4.5-resolve.md |
+| 5 Convert | state.md, phase-3-prd.md (or phase-4-deepen.md) | phase-5-convert.md |
+| 7 Review | state.md, git diff | phase-7-review.md |
+| 8 Harvest | state.md | phase-8-harvest.md |
+
+### Phase Protocol (subagent version)
+
+Each subagent follows this protocol:
+
+1. **Read** its input files (passed in the prompt)
+2. **Write** this phase's output file with `completed: false`
+3. Do the work; append questions to `open-questions.md` if any arise
+4. **Update** output file with results + `completed: true`
+5. Return a brief summary to the main agent
+
+The **main agent** then:
 6. **Update** `state.md` → increment `current_phase`
 7. Gate → AskUserQuestion → next phase
 
-**After compaction:** Read `state.md` for current phase. Read the phase file for that phase. If `completed: false` → re-run the phase. If `completed: true` → proceed to next.
+**After compaction:** Read `state.md` for current phase. Read the phase file for that phase. If `completed: false` → re-spawn the subagent. If `completed: true` → proceed to next.
 
 ### open-questions.md Format
 
@@ -215,24 +264,35 @@ Initialize `state.md` with feature name (from user prompt or ask), `current_phas
 
 **Goal:** Understand existing codebase. Skip for greenfield.
 
-**State protocol:**
-1. Read `.claude/pipeline/state.md`
-2. Write `.claude/pipeline/phase-0-orient.md` with `completed: false`
-3. Do the work:
-   - Check `docs/CODEMAPS/` or `codemaps/` exists
-   - If stale (>24h) or missing → invoke `/update-codemaps`
-   - If no project code → note "greenfield" and skip
-   - Store codemap content summary in phase file
-4. Update `phase-0-orient.md` with results + `completed: true`
-5. Update `state.md` → `current_phase: 1`
+**Main agent dispatches:**
+```
+Task (general-purpose): "You are running Phase 0 (Orient) of a ralph-pipeline.
+
+Read .claude/pipeline/state.md for context.
+
+Your job:
+1. Write .claude/pipeline/phase-0-orient.md with completed: false
+2. Check if docs/CODEMAPS/ or codemaps/ exists
+3. If stale (>24h) or missing → run /update-codemaps
+4. If no project code → note 'greenfield' and skip
+5. Store codemap content summary in phase-0-orient.md
+6. Update phase-0-orient.md with completed: true
+7. Return a 1-2 sentence summary of what you found"
+```
+
+**Main agent after subagent returns:**
+- Verify `phase-0-orient.md` has `completed: true`
+- Update `state.md` → `current_phase: 1`
 
 ---
 
-## Phase 1: Clarification
+## Phase 1: Clarification (runs in main agent)
+
+**Exception:** This phase stays in the main agent because it requires multiple interactive AskUserQuestion rounds.
 
 Three rounds via AskUserQuestion.
 
-**State protocol:**
+**Protocol:**
 1. Read `.claude/pipeline/state.md` + `phase-0-orient.md`
 2. Write `.claude/pipeline/phase-1-clarify.md` with `completed: false`
 3. Do the work (three rounds below)
@@ -276,44 +336,62 @@ Only for large/ambiguous features. If >10 stories, suggest splitting.
 
 ## Phase 2: Research
 
-**State protocol:**
-1. Read `.claude/pipeline/state.md` + `phase-1-clarify.md`
-2. Write `.claude/pipeline/phase-2-research.md` with `completed: false`
-3. Launch agents, aggregate results, append questions to `open-questions.md`
-4. Update `phase-2-research.md` with summary + `completed: true`
-5. Update `state.md` → `current_phase: 3`
-
-Launch user-selected research agents as **parallel Task calls**:
-
+**Main agent dispatches:**
 ```
-Task repo-research-analyst: "Analyze repository architecture, conventions,
-similar implementations, testing patterns.
-Codemap context: [from Phase 0]
-Focus: [feature from Phase 1]"
+Task (general-purpose): "You are running Phase 2 (Research) of a ralph-pipeline.
 
-Task best-practices-researcher: "Research best practices for [tech/pattern].
-[Include /last30days results if gathered]"
+Read these files for context:
+- .claude/pipeline/state.md
+- .claude/pipeline/phase-1-clarify.md
+- .claude/pipeline/phase-0-orient.md
 
-Task framework-docs-researcher: "Find docs for [framework/APIs needed].
-Use Context7 MCP for official docs."
+Your job:
+1. Write .claude/pipeline/phase-2-research.md with completed: false
+2. Launch the research agents listed in state.md (research_agents field) as parallel Task calls:
+   - repo-research-analyst: analyze repo architecture, conventions, testing patterns
+   - best-practices-researcher: research best practices for the tech/pattern
+   - framework-docs-researcher: find docs for frameworks/APIs needed (use Context7 MCP)
+   - Any others listed in state.md
+3. Aggregate all agent results into a research summary
+4. If agents surface unresolved questions, append them to .claude/pipeline/open-questions.md
+5. Write the summary to phase-2-research.md with completed: true
+6. Return a 2-3 sentence summary of key findings"
 ```
 
-Optional (if selected): learnings-researcher, git-history-analyzer.
-
-Aggregate into research summary. **If agents surface unresolved questions** (e.g. "which email provider?", "what deployment target?"), append them to `.claude/pipeline/open-questions.md`.
+**Main agent after subagent returns:**
+- Verify `phase-2-research.md` has `completed: true`
+- Update `state.md` → `current_phase: 3`
 
 ---
 
 ## Phase 3: Create PRD (Tracer Bullet Structure)
 
-**State protocol:**
-1. Read `.claude/pipeline/state.md` + `phase-2-research.md`
-2. Write `.claude/pipeline/phase-3-prd.md` with `completed: false`
-3. Invoke `/ralph-tui-prd`, validate, append questions to `open-questions.md`
-4. Update `phase-3-prd.md` with PRD text + `completed: true`
-5. Update `state.md` → `current_phase: 4`
+**Main agent dispatches:**
+```
+Task (general-purpose): "You are running Phase 3 (Create PRD) of a ralph-pipeline.
 
-Invoke `/ralph-tui-prd` with research + codemaps + this critical instruction:
+Read these files for context:
+- .claude/pipeline/state.md
+- .claude/pipeline/phase-2-research.md
+- .claude/pipeline/phase-0-orient.md
+
+Your job:
+1. Write .claude/pipeline/phase-3-prd.md with completed: false
+2. Invoke /ralph-tui-prd with the research findings and codemap context
+3. Follow the tracer bullet ordering rules below
+4. CRITICAL: Every story that touches frontend/UI MUST have as its FIRST instruction: 'Run /frontend-design for this story's UI before implementation'. This is non-negotiable — include it in the story description, not just acceptance criteria.
+5. For any story that involves browser testing or visual verification, add instruction: 'Use agent-browser (https://github.com/vercel-labs/agent-browser) for browser-based testing'
+6. Validate the PRD output (checklist below)
+7. If the PRD raises unresolved decisions, append to .claude/pipeline/open-questions.md
+8. Write the PRD to phase-3-prd.md with completed: true
+9. Return the PRD story count and a 1-2 sentence summary"
+```
+
+**Main agent after subagent returns:**
+- Verify `phase-3-prd.md` has `completed: true`
+- Update `state.md` → `current_phase: 4`
+
+Subagent must follow this critical instruction:
 
 **Tracer Bullet Story Ordering (from The Pragmatic Programmer):**
 
@@ -328,11 +406,14 @@ Write code that gets you feedback as quickly as possible. Build a tiny end-to-en
 
 **Dependency flow:** stories depend on the prior story's working slice, not on a shared "infrastructure" story. US-001 has no dependencies. US-002 depends on US-001. And so on.
 
-**Frontend Design in UI Stories:**
-Any story that includes frontend/UI work must invoke `/frontend-design` for its UI portion before implementation. This is not a separate story — it's an instruction embedded in each story that touches UI:
-- The story's acceptance criteria should include: "UI designed via /frontend-design before implementation"
-- `/frontend-design` output for that story becomes context for its own implementation
-- This follows the tracer bullet pattern: each story handles its own DB → backend → frontend slice, including the design step for its UI portion
+**Frontend Design in UI Stories (CRITICAL — must not be omitted):**
+Any story that includes frontend/UI work MUST have `/frontend-design` as its **FIRST instruction** in the story description — not buried in acceptance criteria. The pattern:
+- Story description starts with: "**First:** Run `/frontend-design` for this story's UI portion."
+- The `/frontend-design` output becomes context for implementation
+- This follows the tracer bullet pattern: each story handles its own DB → backend → frontend slice, with the design step happening first for its UI portion
+
+**Browser Testing with agent-browser:**
+Any story that involves browser-based testing, visual verification, or E2E checks should use `agent-browser` (https://github.com/vercel-labs/agent-browser) as the preferred tool. Include in story instructions: "Use agent-browser for browser testing."
 
 **Validate PRD output:**
 - [ ] `[PRD]...[/PRD]` markers present
@@ -341,7 +422,8 @@ Any story that includes frontend/UI work must invoke `/frontend-design` for its 
 - [ ] Stories grow the feature incrementally — each leaves the system working
 - [ ] No horizontal layering (never all-DB-first or all-API-first)
 - [ ] Dependencies are sequential (US-002 → US-001, US-003 → US-002, etc.)
-- [ ] If frontend work exists, each UI story includes `/frontend-design` in its acceptance criteria
+- [ ] If frontend work exists, each UI story has `/frontend-design` as its FIRST instruction (not just in AC)
+- [ ] If browser testing needed, stories reference agent-browser as the preferred tool
 
 Fix inline if validation fails.
 
@@ -351,30 +433,32 @@ Fix inline if validation fails.
 
 ## Phase 4: Deepen Plan
 
-**State protocol:**
-1. Read `.claude/pipeline/state.md` + `phase-3-prd.md`
-2. Write `.claude/pipeline/phase-4-deepen.md` with `completed: false`
-3. Launch review agents, incorporate feedback, append questions to `open-questions.md`
-4. Update `phase-4-deepen.md` with enhanced PRD + `completed: true`
-5. Update `state.md` → `current_phase: 4.5`
-
-Launch user-selected review agents **in parallel** against PRD text:
-
+**Main agent dispatches:**
 ```
-Task architecture-strategist: "Review PRD architecture.
-IMPORTANT: Confirm tracer bullet ordering — each story builds DB → backend → frontend
-in the smallest possible increment. No horizontal layering. Each story leaves the
-system in a working state. Flag: coupling issues, missing layers, scaling concerns.
-[PRD text]"
+Task (general-purpose): "You are running Phase 4 (Deepen) of a ralph-pipeline.
 
-Task security-sentinel: "Review PRD for security concerns. [PRD text]"
-Task code-simplicity-reviewer: "Review for over-engineering. [PRD text]"
-Task performance-oracle: "Review performance implications. [PRD text]"
+Read these files for context:
+- .claude/pipeline/state.md (check review_agents field)
+- .claude/pipeline/phase-3-prd.md
+
+Your job:
+1. Write .claude/pipeline/phase-4-deepen.md with completed: false
+2. Launch the review agents listed in state.md (review_agents field) as parallel Task calls against the PRD:
+   - architecture-strategist: confirm tracer bullet ordering, flag coupling/scaling
+   - security-sentinel: review for security concerns
+   - code-simplicity-reviewer: review for over-engineering
+   - performance-oracle: review performance implications
+3. Incorporate feedback into the PRD. Add stories if gaps found.
+4. If agents surface unresolved questions, append to .claude/pipeline/open-questions.md
+5. Write enhanced PRD to phase-4-deepen.md with completed: true
+6. Return: number of insights, number of new questions, summary"
 ```
 
-Incorporate feedback into PRD stories. Add stories if gaps found.
+**Main agent after subagent returns:**
+- Verify `phase-4-deepen.md` has `completed: true`
+- Update `state.md` → `current_phase: 4.5`
 
-**GATE:**
+**GATE (main agent runs this):**
 ```
 AskUserQuestion: "Plan deepened with [N] insights. What next?"
   A. Proceed to open questions resolution (Recommended)
@@ -385,11 +469,13 @@ AskUserQuestion: "Plan deepened with [N] insights. What next?"
 
 ---
 
-## Phase 4.5: Resolve Open Questions
+## Phase 4.5: Resolve Open Questions (runs in main agent)
+
+**Exception:** This phase stays in the main agent because it requires interactive AskUserQuestion rounds.
 
 **This is a BLOCKING gate before conversion.** No unresolved questions may leak into execution.
 
-**State protocol:**
+**Protocol:**
 1. Read `.claude/pipeline/state.md` + `.claude/pipeline/open-questions.md`
 2. Write `.claude/pipeline/phase-4.5-resolve.md` with `completed: false`
 3. Present questions, record answers, update PRD
@@ -411,15 +497,9 @@ AskUserQuestion: "Plan deepened with [N] insights. What next?"
 
 ## Phase 5: Convert
 
-**State protocol:**
-1. Read `.claude/pipeline/state.md` — verify `open_questions_resolved: true`
-2. If `open_questions_resolved` is false or missing → run Phase 4.5 first
-3. Write `.claude/pipeline/phase-5-convert.md` with `completed: false`
-4. Convert, validate
-5. Update `phase-5-convert.md` with format + file paths + `completed: true`
-6. Update `state.md` → `current_phase: 6`, `convert_format: [choice]`
+**Main agent first checks** `state.md` for `open_questions_resolved: true`. If false → run Phase 4.5 first.
 
-**GATE — Choose Format:**
+**GATE (main agent runs this):**
 ```
 AskUserQuestion: "Convert PRD to which format?"
   A. beads via bd (Go CLI) (Recommended if bd installed)
@@ -427,21 +507,126 @@ AskUserQuestion: "Convert PRD to which format?"
   C. prd.json (no CLI needed)
 ```
 
-Invoke matching skill:
-- **bd** → `/ralph-tui-create-beads`
-- **br** → `/ralph-tui-create-beads-rust`
-- **json** → `/ralph-tui-create-json`
+**Main agent dispatches after user chooses format:**
+```
+Task (general-purpose): "You are running Phase 5 (Convert) of a ralph-pipeline.
 
-**Validate:** item count matches stories, dependencies set, US-001 has no dependencies, quality gates in acceptance criteria.
+Read these files for context:
+- .claude/pipeline/state.md
+- .claude/pipeline/phase-3-prd.md (or phase-4-deepen.md if it exists)
+
+Your job:
+1. Write .claude/pipeline/phase-5-convert.md with completed: false
+2. Invoke the matching skill: [bd → /ralph-tui-create-beads, br → /ralph-tui-create-beads-rust, json → /ralph-tui-create-json]
+3. Validate: item count matches stories, dependencies set, US-001 has no deps, quality gates in acceptance criteria
+4. Write format choice + file paths to phase-5-convert.md with completed: true
+5. Return: format used, number of items created, file paths"
+```
+
+**Main agent after subagent returns:**
+- Verify `phase-5-convert.md` has `completed: true`
+- Update `state.md` → `current_phase: 6`, `convert_format: [choice]`
 
 ---
 
-## Phase 6: Pause for Manual Execution
+## Phase 6: Execute Beads
+
+**GATE — Choose Execution Mode:**
+```
+AskUserQuestion: "How do you want to execute the beads?"
+  A. Manual - run ralph-tui yourself (Recommended for interactive work)
+  B. Headless - each bead runs in its own Claude session (fresh context per bead, good for overnight/batch)
+  C. Skip to review
+```
+
+### Option A: Manual Execution
 
 Display exact command:
 ```
 ralph-tui run [--tracker <tracker> --epic <epic-id> | --prd ./prd.json]
 ```
+
+### Option B: Headless Execution
+
+Each bead gets its own `claude -p` invocation with a fresh context window — no context limit issues across beads.
+
+**Generate and run the headless script:**
+
+For **beads (bd/br)** format — read bead files from the tracker:
+```bash
+# Detect bead files from Phase 5 output
+BEAD_DIR=$(grep 'bead_dir:' .claude/pipeline/phase-5-convert.md | awk '{print $2}')
+
+for bead_file in "$BEAD_DIR"/*.md; do
+  BEAD_NAME=$(basename "$bead_file" .md)
+  echo "=== Executing bead: $BEAD_NAME ==="
+  claude -p "You are executing a single bead from a ralph-pipeline run.
+
+Read .claude/pipeline/state.md for project context.
+Read .claude/pipeline/phase-3-prd.md for the full PRD.
+Read $bead_file for this bead's requirements and acceptance criteria.
+
+Execute the bead:
+1. If this bead has frontend/UI work, run /frontend-design FIRST before implementation
+2. Implement the feature described in the bead
+3. If browser testing is needed, use agent-browser (https://github.com/vercel-labs/agent-browser)
+4. Run quality gates after implementation
+5. Commit with a conventional commit message referencing the bead
+6. Write a brief completion summary to .claude/pipeline/bead-results/${BEAD_NAME}.md
+
+If you hit a blocker, write the blocker to .claude/pipeline/bead-results/${BEAD_NAME}.md and stop." \
+    --allowedTools "Edit,Read,Write,Bash,Grep,Glob" \
+    --max-turns 30
+  echo "=== Bead $BEAD_NAME complete ==="
+done
+```
+
+For **prd.json** format — iterate over stories:
+```bash
+STORIES=$(cat prd.json | jq -r '.user_stories[].id')
+
+for story in $STORIES; do
+  STORY_TITLE=$(cat prd.json | jq -r ".user_stories[] | select(.id == \"$story\") | .title")
+  echo "=== Executing story: $story - $STORY_TITLE ==="
+  claude -p "You are executing a single user story from a ralph-pipeline run.
+
+Read .claude/pipeline/state.md for project context.
+Read .claude/pipeline/phase-3-prd.md for the full PRD.
+
+Execute story $story from prd.json:
+$(cat prd.json | jq ".user_stories[] | select(.id == \"$story\")")
+
+Steps:
+1. If this story has frontend/UI work, run /frontend-design FIRST before implementation
+2. Implement the feature described in the story
+3. If browser testing is needed, use agent-browser (https://github.com/vercel-labs/agent-browser)
+4. Run quality gates after implementation
+5. Commit with a conventional commit message referencing $story
+6. Write a brief completion summary to .claude/pipeline/bead-results/${story}.md
+
+If you hit a blocker, write the blocker to .claude/pipeline/bead-results/${story}.md and stop." \
+    --allowedTools "Edit,Read,Write,Bash,Grep,Glob" \
+    --max-turns 30
+  echo "=== Story $story complete ==="
+done
+```
+
+Before running, create the results directory:
+```bash
+mkdir -p .claude/pipeline/bead-results
+```
+
+After headless execution completes, summarize results:
+```bash
+echo "=== Headless Execution Summary ==="
+for result in .claude/pipeline/bead-results/*.md; do
+  echo "--- $(basename "$result" .md) ---"
+  cat "$result"
+  echo ""
+done
+```
+
+### Post-Execution (both modes)
 
 **Tracer Bullet Reminder:** After US-001 completes, verify the end-to-end path works (DB → backend → frontend) before expanding in subsequent stories.
 
@@ -449,7 +634,7 @@ ralph-tui run [--tracker <tracker> --epic <epic-id> | --prd ./prd.json]
 
 **GATE:**
 ```
-AskUserQuestion: "How did ralph-tui execution go?"
+AskUserQuestion: "How did execution go?"
   A. All tasks passed - ready for review
   B. Some tasks failed - need fixes
   C. Tracer bullet (US-001) failed - need to replan
@@ -466,29 +651,30 @@ AskUserQuestion: "How did ralph-tui execution go?"
 
 ## Phase 7: Compound Review
 
-**State protocol:**
-1. Read `.claude/pipeline/state.md`
-2. Write `.claude/pipeline/phase-7-review.md` with `completed: false`
-3. Run review agents, categorize findings
-4. Update `phase-7-review.md` with findings + `completed: true`
-5. Update `state.md` → `current_phase: 8`
+**Main agent dispatches:**
+```
+Task (general-purpose): "You are running Phase 7 (Compound Review) of a ralph-pipeline.
 
-Run review agents from Phase 1 **in parallel** against full diff:
+Read .claude/pipeline/state.md for context (check review_agents field).
 
-```bash
-git diff main...HEAD
+Your job:
+1. Write .claude/pipeline/phase-7-review.md with completed: false
+2. Get the full diff: git diff main...HEAD
+3. Launch the review agents listed in state.md as parallel Task calls against the diff:
+   - security-sentinel: security review
+   - architecture-strategist: architecture review
+   - code-simplicity-reviewer: simplicity review
+   - performance-oracle: performance review
+4. Categorize all findings: P1 (must fix), P2 (should fix), P3 (nice-to-have)
+5. Write findings to phase-7-review.md with completed: true
+6. Return: P1/P2/P3 counts and top 3 findings summary"
 ```
 
-```
-Task security-sentinel: "Security review: [diff]"
-Task architecture-strategist: "Architecture review: [diff]"
-Task code-simplicity-reviewer: "Simplicity review: [diff]"
-Task performance-oracle: "Performance review: [diff]"
-```
+**Main agent after subagent returns:**
+- Verify `phase-7-review.md` has `completed: true`
+- Update `state.md` → `current_phase: 8`
 
-Categorize findings: **P1** (must fix), **P2** (should fix), **P3** (nice-to-have).
-
-**GATE:**
+**GATE (main agent runs this):**
 ```
 AskUserQuestion: "Review complete. [N] P1, [M] P2, [K] P3. What next?"
   A. Fix P1 critical issues (Recommended if P1 > 0)
@@ -502,17 +688,25 @@ AskUserQuestion: "Review complete. [N] P1, [M] P2, [K] P3. What next?"
 
 ## Phase 8: Harvest Learnings
 
-**State protocol:**
-1. Read `.claude/pipeline/state.md`
-2. Write `.claude/pipeline/phase-8-harvest.md` with `completed: false`
-3. Harvest + codemap refresh
-4. Update `phase-8-harvest.md` with summary + `completed: true`
-5. Update `state.md` → `current_phase: done`
+**Main agent dispatches:**
+```
+Task (general-purpose): "You are running Phase 8 (Harvest) of a ralph-pipeline.
 
-1. Invoke `/choo-choo-ralph:harvest`
-2. Invoke `/update-codemaps` for final refresh
+Read .claude/pipeline/state.md for context.
 
-**GATE:**
+Your job:
+1. Write .claude/pipeline/phase-8-harvest.md with completed: false
+2. Invoke /choo-choo-ralph:harvest to extract learnings from completed work
+3. Invoke /update-codemaps for final codemap refresh
+4. Write harvest summary to phase-8-harvest.md with completed: true
+5. Return: number of learnings harvested, codemap refresh status"
+```
+
+**Main agent after subagent returns:**
+- Verify `phase-8-harvest.md` has `completed: true`
+- Update `state.md` → `current_phase: done`
+
+**GATE (main agent runs this):**
 ```
 AskUserQuestion: "Pipeline complete. What next?"
   A. Review harvested learnings
@@ -525,12 +719,13 @@ AskUserQuestion: "Pipeline complete. What next?"
 
 ## Key Principles
 
-1. **Chain, don't reimplement** — invoke existing skills, don't duplicate logic
-2. **Tracer bullet ordering** — build the tiniest DB → backend → frontend slice first, confirm it works, then expand. Every story leaves the system working.
-3. **Never horizontal layers** — never build all DB first, then all API, then all UI. Each story touches all layers in the smallest increment.
-4. **Codemaps as context** — agents understand existing code without re-exploring
-5. **Gates between phases** — user controls pace and direction
-6. **Parallel agents** — launch independent Task calls simultaneously
-7. **Resumable via disk state** — `.claude/pipeline/state.md` is the source of truth; survives compaction
-8. **No unresolved questions past Phase 4.5** — all decisions locked before conversion
-9. **Every phase writes completion markers** — `completed: true/false` in YAML frontmatter
+1. **Thin main agent + subagent per phase** — the main agent orchestrates; each phase runs in its own Task subagent with a fresh context window. Only interactive gates (AskUserQuestion) stay in the main agent.
+2. **Chain, don't reimplement** — invoke existing skills, don't duplicate logic
+3. **Tracer bullet ordering** — build the tiniest DB → backend → frontend slice first, confirm it works, then expand. Every story leaves the system working.
+4. **Never horizontal layers** — never build all DB first, then all API, then all UI. Each story touches all layers in the smallest increment.
+5. **Codemaps as context** — agents understand existing code without re-exploring
+6. **Gates between phases** — user controls pace and direction
+7. **Parallel agents** — launch independent Task calls simultaneously
+8. **Resumable via disk state** — `.claude/pipeline/state.md` is the source of truth; survives compaction
+9. **No unresolved questions past Phase 4.5** — all decisions locked before conversion
+10. **Every phase writes completion markers** — `completed: true/false` in YAML frontmatter
