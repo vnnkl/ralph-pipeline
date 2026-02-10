@@ -20,11 +20,12 @@ Describe your feature when prompted. The pipeline handles everything else — de
 
 Building a real feature with Claude Code typically means juggling multiple skills manually — generate a PRD, pick research agents, run reviews, convert to tasks, harvest learnings. Each step requires context from the previous one, and if the context window compacts mid-session, you lose decisions, research findings, and progress.
 
-Ralph Pipeline solves three problems:
+Ralph Pipeline solves four problems:
 
 1. **Orchestration** — chains 9 phases in the right order, passing context between them automatically
-2. **Compaction resilience** — persists all state to disk (`.claude/pipeline/`), so context compaction never loses progress
-3. **Decision tracking** — collects open questions as they arise and resolves them all before execution begins
+2. **Context overflow** — each phase runs in its own Task subagent with a fresh context window, so research/PRD/review phases never blow up the main agent's context
+3. **Compaction resilience** — persists all state to disk (`.claude/pipeline/`), so context compaction never loses progress
+4. **Decision tracking** — collects open questions as they arise and resolves them all before execution begins
 
 ## The Pipeline
 
@@ -45,7 +46,7 @@ Phase 4.5   Resolve — block until every open question has an answer
      |
 Phase 5     Convert — transform PRD into beads or prd.json for ralph-tui
      |
-Phase 6     Pause — you run ralph-tui manually, then report back
+Phase 6     Execute — manual ralph-tui or headless (claude -p per bead)
      |
 Phase 7     Review — parallel review agents against the full diff
      |
@@ -115,7 +116,7 @@ Launches your selected research agents in parallel — repo analysis, best pract
 
 ### Phase 3: Create PRD
 
-Invokes `/ralph-tui-prd` with research context. Enforces tracer bullet ordering: US-001 is the thinnest vertical slice, each subsequent story expands incrementally. Stories that include UI work run `/frontend-design` as part of their acceptance criteria.
+Invokes `/ralph-tui-prd` with research context. Enforces tracer bullet ordering: US-001 is the thinnest vertical slice, each subsequent story expands incrementally. Stories that include UI work must run `/frontend-design` as their first instruction before implementation. Stories needing browser testing use [agent-browser](https://github.com/vercel-labs/agent-browser) as the preferred tool.
 
 ### Phase 4: Deepen
 
@@ -129,9 +130,9 @@ Blocking gate. Presents every unresolved question collected during phases 2-4. Y
 
 Transforms the PRD into the format ralph-tui needs: beads via `bd` (Go) or `br` (Rust), or `prd.json` if no CLI is installed. Validates story count, dependencies, and quality gates.
 
-### Phase 6: Pause
+### Phase 6: Execute
 
-You run `ralph-tui` manually. The pipeline reminds you to verify the tracer bullet (US-001) end-to-end before continuing. When done, report back — the pipeline handles the rest.
+Two modes: **manual** (run `ralph-tui` yourself) or **headless** (each bead gets its own `claude -p` session with fresh context — good for overnight/batch runs). Both modes remind you to verify the tracer bullet (US-001) end-to-end before continuing. Frontend stories run `/frontend-design` first; browser testing uses [agent-browser](https://github.com/vercel-labs/agent-browser).
 
 ### Phase 7: Review
 
@@ -150,6 +151,7 @@ Invokes `/harvest` to capture learnings from the completed work, then refreshes 
 | [everything-claude-code](https://github.com/affaan-m/everything-claude-code) | Plugin | Yes (for codemaps) |
 | [choo-choo-ralph](https://github.com/subsy/choo-choo-ralph) | Plugin | Yes (for harvest) |
 | [last30days](https://github.com/mvanhorn/last30days-skill) | Skill | Optional |
+| [agent-browser](https://github.com/vercel-labs/agent-browser) | CLI | Optional (for browser testing) |
 | ralph-tui CLI | CLI | Optional (for Phase 6) |
 | bd or br CLI | CLI | Optional (for Phase 5 beads) |
 
@@ -157,11 +159,17 @@ The pre-flight phase auto-installs missing skills and warns about missing plugin
 
 ## Design Decisions
 
+**Why subagent-per-phase?** Research, PRD creation, deepening, and review phases generate massive context. Running them all in the main agent overflows the context window. Each phase runs in its own Task subagent with a fresh context window, receiving only the files it needs. The main agent stays thin — it reads state, dispatches, verifies output, and runs gates. Only interactive phases (Clarify, Resolve) stay in the main agent because they need AskUserQuestion.
+
 **Why disk state instead of relying on context?** Context compaction is unpredictable. A pipeline run can span hours and hit compaction multiple times. Disk state means the pipeline always knows where it is.
 
 **Why a blocking questions gate?** Without it, agents surface questions ("which email provider?") that get lost in the context window. By Phase 5, you're converting a PRD with unresolved decisions. The gate forces resolution before execution.
 
 **Why tracer bullet ordering?** Horizontal layering (build all DB, then all API, then all UI) delays feedback. You don't discover integration issues until the end. Tracer bullets give you a working system after every story.
+
+**Why /frontend-design first?** UI stories that skip design end up with ad-hoc layouts that need rework. Making `/frontend-design` the first instruction (not just an acceptance criterion) ensures design happens before code.
+
+**Why agent-browser for testing?** [agent-browser](https://github.com/vercel-labs/agent-browser) provides headless browser automation purpose-built for AI agents. It's the preferred tool for browser-based testing, visual verification, and E2E checks.
 
 **Why parallel agents?** Research and review agents are independent. Running them sequentially wastes time. Parallel execution gets results faster without sacrificing quality.
 
