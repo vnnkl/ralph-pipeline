@@ -378,7 +378,7 @@ Read these files for context:
 Your job:
 1. Write .claude/pipeline/phase-3-prd.md with completed: false
 2. Invoke /ralph-tui-prd with the research findings and codemap context
-3. Follow the tracer bullet ordering rules below
+3. Follow the tracer bullet ordering rules below — each story is a thin vertical slice (DB → backend → frontend), and each must be verified end-to-end before the next one starts. Include a verification step in every story's acceptance criteria.
 4. CRITICAL: Every story that touches frontend/UI MUST have as its FIRST instruction: 'Run /frontend-design for this story's UI before implementation'. This is non-negotiable — include it in the story description, not just acceptance criteria.
 5. For any story that involves browser testing or visual verification, add instruction: 'Use agent-browser (https://github.com/vercel-labs/agent-browser) for browser-based testing'
 6. Validate the PRD output (checklist below)
@@ -395,14 +395,15 @@ Subagent must follow this critical instruction:
 
 **Tracer Bullet Story Ordering (from The Pragmatic Programmer):**
 
-Write code that gets you feedback as quickly as possible. Build a tiny end-to-end slice first, confirm it works, then expand outward from there.
+Build → test → feedback → iterate. Build a tiny end-to-end slice, verify it works, then expand. Never outrun your headlights.
 
 **Ordering principle — every feature grows layer by layer:**
 1. **US-001 = tracer bullet** — tiniest DB change → backend endpoint that uses it → frontend that calls it. Must be testable end-to-end.
 2. Each subsequent story expands on the working tracer: add a column → add a service method → add a UI element. Always DB → backend → frontend order within a story.
-3. After each story completes, the feature works — just with less functionality. Every story leaves the system in a working, demoable state.
-4. NEVER horizontal layers (all DB first → all API next → all UI last). This delays feedback and hides integration issues.
-5. Each story sized for one ralph-tui iteration.
+3. **Verify after every story** — each story must be tested end-to-end before the next one starts. Don't build US-002 on an unverified US-001. The whole point is early feedback.
+4. After each story completes, the feature works — just with less functionality. Every story leaves the system in a working, demoable state.
+5. NEVER horizontal layers (all DB first → all API next → all UI last). This delays feedback and hides integration issues.
+6. Each story sized for one ralph-tui iteration.
 
 **Dependency flow:** stories depend on the prior story's working slice, not on a shared "infrastructure" story. US-001 has no dependencies. US-002 depends on US-001. And so on.
 
@@ -422,6 +423,7 @@ Any story that involves browser-based testing, visual verification, or E2E check
 - [ ] Stories grow the feature incrementally — each leaves the system working
 - [ ] No horizontal layering (never all-DB-first or all-API-first)
 - [ ] Dependencies are sequential (US-002 → US-001, US-003 → US-002, etc.)
+- [ ] Every story includes end-to-end verification in its AC (verify the slice works before moving on)
 - [ ] If frontend work exists, each UI story has `/frontend-design` as its FIRST instruction (not just in AC)
 - [ ] If browser testing needed, stories reference agent-browser as the preferred tool
 
@@ -571,10 +573,11 @@ Execute the bead:
 2. Implement the feature described in the bead
 3. If browser testing is needed, use agent-browser (https://github.com/vercel-labs/agent-browser)
 4. Run quality gates after implementation
-5. Commit with a conventional commit message referencing the bead
-6. Write a brief completion summary to .claude/pipeline/bead-results/${BEAD_NAME}.md
+5. Verify the end-to-end path works (DB → backend → frontend) — don't just check that code compiles, confirm the slice actually functions
+6. Commit with a conventional commit message referencing the bead
+7. Write a brief completion summary to .claude/pipeline/bead-results/${BEAD_NAME}.md including verification result
 
-If you hit a blocker, write the blocker to .claude/pipeline/bead-results/${BEAD_NAME}.md and stop." \
+If you hit a blocker or verification fails, write the blocker to .claude/pipeline/bead-results/${BEAD_NAME}.md and stop. Do NOT proceed to the next bead on a broken slice." \
     --allowedTools "Edit,Read,Write,Bash,Grep,Glob" \
     --max-turns 30
   echo "=== Bead $BEAD_NAME complete ==="
@@ -601,10 +604,11 @@ Steps:
 2. Implement the feature described in the story
 3. If browser testing is needed, use agent-browser (https://github.com/vercel-labs/agent-browser)
 4. Run quality gates after implementation
-5. Commit with a conventional commit message referencing $story
-6. Write a brief completion summary to .claude/pipeline/bead-results/${story}.md
+5. Verify the end-to-end path works (DB → backend → frontend) — don't just check that code compiles, confirm the slice actually functions
+6. Commit with a conventional commit message referencing $story
+7. Write a brief completion summary to .claude/pipeline/bead-results/${story}.md including verification result
 
-If you hit a blocker, write the blocker to .claude/pipeline/bead-results/${story}.md and stop." \
+If you hit a blocker or verification fails, write the blocker to .claude/pipeline/bead-results/${story}.md and stop. Do NOT proceed to the next story on a broken slice." \
     --allowedTools "Edit,Read,Write,Bash,Grep,Glob" \
     --max-turns 30
   echo "=== Story $story complete ==="
@@ -628,7 +632,7 @@ done
 
 ### Post-Execution (both modes)
 
-**Tracer Bullet Reminder:** After US-001 completes, verify the end-to-end path works (DB → backend → frontend) before expanding in subsequent stories.
+**Tracer Bullet Reminder:** Every story must be verified end-to-end (DB → backend → frontend) before proceeding to the next. US-001 is the most critical — if the initial tracer fails, stop and replan. But don't skip verification on any story. The whole approach depends on never building on an unverified slice.
 
 **Codemap Reminder:** Codemaps refreshed via quality gates before each task commit.
 
@@ -721,7 +725,7 @@ AskUserQuestion: "Pipeline complete. What next?"
 
 1. **Thin main agent + subagent per phase** — the main agent orchestrates; each phase runs in its own Task subagent with a fresh context window. Only interactive gates (AskUserQuestion) stay in the main agent.
 2. **Chain, don't reimplement** — invoke existing skills, don't duplicate logic
-3. **Tracer bullet ordering** — build the tiniest DB → backend → frontend slice first, confirm it works, then expand. Every story leaves the system working.
+3. **Tracer bullet ordering** — build → test → feedback → iterate. Build the tiniest vertical slice, verify it works end-to-end, then expand. Never build the next story on an unverified slice.
 4. **Never horizontal layers** — never build all DB first, then all API, then all UI. Each story touches all layers in the smallest increment.
 5. **Codemaps as context** — agents understand existing code without re-exploring
 6. **Gates between phases** — user controls pace and direction

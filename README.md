@@ -57,11 +57,11 @@ Every phase has a gate. You decide when to proceed, go back, or skip ahead.
 
 ## Tracer Bullet Ordering
 
-Stories are ordered using the tracer bullet pattern from *The Pragmatic Programmer*: build the tiniest end-to-end slice first, confirm it works, then expand.
+Stories follow the tracer bullet cycle: build → test → feedback → iterate. Build the tiniest end-to-end slice, verify it works, then expand.
 
 Each story follows DB → backend → frontend order in the smallest possible increment. After every story, the system works — just with less functionality. No horizontal layering (never all-DB-first, then all-API, then all-UI).
 
-This means you get feedback early. If the architecture is wrong, you find out on story 1, not story 10.
+Critically, every story must be verified end-to-end before the next one starts. Don't build US-002 on an unverified US-001. The whole point is early feedback — if the architecture is wrong, you find out on story 1, not story 10.
 
 ## Compaction Resilience
 
