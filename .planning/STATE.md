@@ -10,28 +10,28 @@ See: .planning/PROJECT.md (updated 2026-02-25)
 ## Current Position
 
 Phase: 1 of 5 (Foundation)
-Plan: 1 of 4 in current phase
+Plan: 3 of 4 in current phase
 Status: Executing
-Last activity: 2026-02-25 -- Completed 01-01 (core infrastructure)
+Last activity: 2026-02-25 -- Completed 01-03 (pre-flight dependency checker)
 
-Progress: [█░░░░░░░░░] 5%
+Progress: [██░░░░░░░░] 15%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 1
-- Average duration: 3min
-- Total execution time: 0.05 hours
+- Total plans completed: 2
+- Average duration: 3.5min
+- Total execution time: 0.12 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 1 - Foundation | 1/4 | 3min | 3min |
+| 1 - Foundation | 2/4 | 7min | 3.5min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (3min)
-- Trend: starting
+- Last 5 plans: 01-01 (3min), 01-03 (4min)
+- Trend: stable
 
 *Updated after each plan completion*
 
@@ -48,6 +48,10 @@ Recent decisions affecting current work:
 - Error objects include { error: true, message, code } extending GSD pattern with error codes (01-01)
 - loadConfig defaults scoped to ralph-pipeline domain: mode, depth, model_profile, commit_docs, auto_advance, time_budget, ide (01-01)
 - reconstructFrontmatter takes (frontmatter, body) as two args for cleaner API (01-01)
+- Preflight is diagnostic only -- reports missing deps but does not install (01-03)
+- setup-reference pins EXPECTED_GSD_VERSION constant with version_matched output (01-03)
+- MCP server check reads both ~/.claude.json and ~/.claude/settings.json (01-03)
+- Skills checked in two paths: ~/.claude/skills/ then {cwd}/.claude/skills/ (01-03)
 
 ### Pending Todos
 
@@ -61,5 +65,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-25
-Stopped at: Completed 01-01-PLAN.md (core infrastructure)
+Stopped at: Completed 01-03-PLAN.md (pre-flight dependency checker)
 Resume file: None

@@ -10,13 +10,13 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Core Orchestration
 
 - [ ] **ORCH-01**: Plugin ships as installable Claude Code skill (SKILL.md + ralph-tools.cjs + templates/)
-- [ ] **ORCH-02**: Pre-flight detects user's IDE environment (or asks) and checks only relevant dependencies (ralph-tui, bd/br CLIs, required skills) — no bloat installs
+- [x] **ORCH-02**: Pre-flight detects user's IDE environment (or asks) and checks only relevant dependencies (ralph-tui, bd/br CLIs, required skills) — no bloat installs
 - [ ] **ORCH-03**: Pipeline executes phases sequentially: pre-flight → clarify → research → PRD → deepen → resolve → convert → execute → review
 - [ ] **ORCH-04**: Each phase transition triggers /clear for true context isolation (fresh session per phase)
 - [ ] **ORCH-05**: User gates between phases via AskUserQuestion (approve/redirect/replan)
 - [ ] **ORCH-06**: YOLO mode auto-approves all gates without user interaction
 - [ ] **ORCH-07**: Auto-advance chain (--auto flag): phases advance hands-free from research through review
-- [ ] **ORCH-08**: GSD repo cloned to .reference/get-shit-done/ and gitignored as authoritative implementation reference — subagents Read actual source files rather than relying on training data
+- [x] **ORCH-08**: GSD repo cloned to .reference/get-shit-done/ and gitignored as authoritative implementation reference — subagents Read actual source files rather than relying on training data
 
 ### State Management
 
@@ -112,13 +112,13 @@ Requirements for initial release. Each maps to roadmap phases.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | ORCH-01 | Phase 1 | Pending |
-| ORCH-02 | Phase 1 | Pending |
+| ORCH-02 | Phase 1 | Complete |
 | ORCH-03 | Phase 2 | Pending |
 | ORCH-04 | Phase 2 | Pending |
 | ORCH-05 | Phase 2 | Pending |
 | ORCH-06 | Phase 5 | Pending |
 | ORCH-07 | Phase 5 | Pending |
-| ORCH-08 | Phase 1 | Pending |
+| ORCH-08 | Phase 1 | Complete |
 | STATE-01 | Phase 1 | Complete |
 | STATE-02 | Phase 1 | Pending |
 | STATE-03 | Phase 1 | Pending |
