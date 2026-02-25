@@ -78,7 +78,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Quality gates (tests pass, type checks pass) are enforced per bead -- a failing bead stops the batch and surfaces the failure clearly
   4. Post-execution review spawns four parallel agents (security, architecture, performance, simplicity) and categorizes findings as P1/P2/P3
   5. Review gate presents fix P1s / fix P1+P2 / skip / re-run / create PR options and executes the chosen action
-**Plans**: TBD
+**Plans**: 3 plans
+- [ ] 04-01-PLAN.md -- Convert template (bead format gate, skill chaining, frontend detection, bead validation)
+- [ ] 04-02-PLAN.md -- Execute template (headless claude -p / manual ralph-tui, stop-on-failure, result files)
+- [ ] 04-03-PLAN.md -- Review template + PHASE_FILES (parallel review agents, P1/P2/P3, fix/re-run/PR gate)
 
 ### Phase 5: Advanced Features
 **Goal**: YOLO mode, auto-advance chain, and time budget work as described -- users can run the full pipeline hands-free overnight
@@ -102,5 +105,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 1. Foundation | 5/5 | Complete | 2026-02-25 |
 | 2. Orchestrator Shell | 2/2 | Complete | 2026-02-25 |
 | 3. Phase Content | 2/2 | Complete | 2026-02-25 |
-| 4. Execution Layer | 0/TBD | Not started | - |
+| 4. Execution Layer | 0/3 | Not started | - |
 | 5. Advanced Features | 0/TBD | Not started | - |
