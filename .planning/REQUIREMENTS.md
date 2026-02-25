@@ -20,14 +20,14 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### State Management
 
-- [ ] **STATE-01**: ralph-tools.cjs is a single .cjs file with zero npm dependencies
+- [x] **STATE-01**: ralph-tools.cjs is a single .cjs file with zero npm dependencies
 - [ ] **STATE-02**: ralph-tools.cjs handles all state mutations (advance phase, mark complete, update progress)
 - [ ] **STATE-03**: ralph-tools.cjs handles git commits with conditional logic (commit_docs flag, .gitignore check)
 - [ ] **STATE-04**: ralph-tools.cjs provides compound `init` commands that load all context in one call
-- [ ] **STATE-05**: State persisted to .planning/ as YAML frontmatter + markdown body (machine + human readable)
+- [x] **STATE-05**: State persisted to .planning/ as YAML frontmatter + markdown body (machine + human readable)
 - [ ] **STATE-06**: Each phase output file has `completed: true/false` flag for crash recovery
 - [ ] **STATE-07**: GSD-style resumability: on invocation, read STATE.md to determine current phase and resume from last incomplete phase
-- [ ] **STATE-08**: config.json stores workflow preferences (mode, depth, parallelization, model_profile, time_budget)
+- [x] **STATE-08**: config.json stores workflow preferences (mode, depth, parallelization, model_profile, time_budget)
 
 ### Research Phase
 
@@ -119,14 +119,14 @@ Requirements for initial release. Each maps to roadmap phases.
 | ORCH-06 | Phase 5 | Pending |
 | ORCH-07 | Phase 5 | Pending |
 | ORCH-08 | Phase 1 | Pending |
-| STATE-01 | Phase 1 | Pending |
+| STATE-01 | Phase 1 | Complete |
 | STATE-02 | Phase 1 | Pending |
 | STATE-03 | Phase 1 | Pending |
 | STATE-04 | Phase 1 | Pending |
-| STATE-05 | Phase 1 | Pending |
+| STATE-05 | Phase 1 | Complete |
 | STATE-06 | Phase 1 | Pending |
 | STATE-07 | Phase 2 | Pending |
-| STATE-08 | Phase 1 | Pending |
+| STATE-08 | Phase 1 | Complete |
 | RSRCH-01 | Phase 3 | Pending |
 | RSRCH-02 | Phase 3 | Pending |
 | RSRCH-03 | Phase 3 | Pending |
