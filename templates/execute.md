@@ -108,6 +108,19 @@ If the user chooses **Headless** (or "2" or "headless"):
 
 For each bead in the ordered list, execute sequentially. Track counters: `PASSED=0`, `FAILED=0`, `FAILED_BEAD=""`.
 
+Before the loop begins, define the quality gate suffix that will be appended to each bead prompt:
+
+```bash
+QUALITY_GATE_SUFFIX="
+
+---
+QUALITY GATES (mandatory before reporting success):
+1. If the project has a test suite, run the relevant tests. Your work is not complete until tests pass.
+2. If the project uses a typed language (TypeScript, Go, Rust, etc.), run the type checker. Your work is not complete until type checks pass.
+3. If both tests and type checks fail, fix the issues before reporting success.
+Your exit code MUST reflect the actual state: exit 0 only if your implementation is correct AND quality gates pass."
+```
+
 For each bead:
 
 1. Extract the bead name:
@@ -122,9 +135,9 @@ For each bead:
 
 3. Read the bead file content.
 
-4. Execute the bead via Bash. CRITICAL: Must use `env -u CLAUDECODE` to avoid nested session error (Pitfall 3 from research):
+4. Execute the bead via Bash. CRITICAL: Must use `env -u CLAUDECODE` to avoid nested session error (Pitfall 3 from research). The quality gate suffix is appended to the bead content so the bead agent is explicitly instructed to run tests and type checks:
    ```bash
-   cat "{{CWD}}/.beads/{BEAD_NAME}.md" | env -u CLAUDECODE claude -p \
+   (cat "{{CWD}}/.beads/{BEAD_NAME}.md"; echo "$QUALITY_GATE_SUFFIX") | env -u CLAUDECODE claude -p \
      --allowedTools "Read,Edit,Bash,Grep,Glob,Write" \
      --output-format json \
      --dangerously-skip-permissions
@@ -279,7 +292,7 @@ Build this table by reading each result file in `.claude/pipeline/bead-results/`
 - Bead-level progress displayed during execution
 - On failure: re-run bead X / retry all / proceed / abort gate presented
 - Results aggregated with pass/fail/blocked counts
-- No external quality gates (pipeline trusts bead agent's self-reported result)
+- Quality gates enforced by instructing the bead agent to run tests and type checks before reporting success (pipeline trusts bead agent's self-reported result per CONTEXT.md decision, but explicitly instructs the agent to enforce quality gates)
 - No per-bead timeout
 - No parallel bead execution
 </success_criteria>
