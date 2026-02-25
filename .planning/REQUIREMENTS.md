@@ -31,15 +31,15 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Research Phase
 
-- [ ] **RSRCH-01**: Parallel research agents spawn before PRD (repo-research-analyst, best-practices-researcher, framework-docs-researcher, learnings-researcher)
-- [ ] **RSRCH-02**: Research outputs written to .planning/research/ as structured markdown
-- [ ] **RSRCH-03**: Research summary synthesized from individual outputs before PRD creation
+- [x] **RSRCH-01**: Parallel research agents spawn before PRD (repo-research-analyst, best-practices-researcher, framework-docs-researcher, learnings-researcher)
+- [x] **RSRCH-02**: Research outputs written to .planning/research/ as structured markdown
+- [x] **RSRCH-03**: Research summary synthesized from individual outputs before PRD creation
 
 ### PRD Phase
 
-- [ ] **PRD-01**: PRD created by invoking /ralph-tui-prd skill with research context (chain, don't reimplement)
-- [ ] **PRD-02**: PRD enforces tracer bullet ordering (vertical slices: DB → backend → frontend per story)
-- [ ] **PRD-03**: Open questions collected during PRD creation appended to open-questions file
+- [x] **PRD-01**: PRD created by invoking /ralph-tui-prd skill with research context (chain, don't reimplement)
+- [x] **PRD-02**: PRD enforces tracer bullet ordering (vertical slices: DB → backend → frontend per story)
+- [x] **PRD-03**: Open questions collected during PRD creation appended to open-questions file
 
 ### Deepen Phase
 
@@ -127,12 +127,12 @@ Requirements for initial release. Each maps to roadmap phases.
 | STATE-06 | Phase 1 | Complete |
 | STATE-07 | Phase 2 | Complete |
 | STATE-08 | Phase 1 | Complete |
-| RSRCH-01 | Phase 3 | Pending |
-| RSRCH-02 | Phase 3 | Pending |
-| RSRCH-03 | Phase 3 | Pending |
-| PRD-01 | Phase 3 | Pending |
-| PRD-02 | Phase 3 | Pending |
-| PRD-03 | Phase 3 | Pending |
+| RSRCH-01 | Phase 3 | Complete |
+| RSRCH-02 | Phase 3 | Complete |
+| RSRCH-03 | Phase 3 | Complete |
+| PRD-01 | Phase 3 | Complete |
+| PRD-02 | Phase 3 | Complete |
+| PRD-03 | Phase 3 | Complete |
 | DEEP-01 | Phase 3 | Pending |
 | DEEP-02 | Phase 3 | Pending |
 | RSLV-01 | Phase 3 | Pending |
