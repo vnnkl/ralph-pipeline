@@ -13,8 +13,8 @@ Build a Claude Code skill that orchestrates a 9-phase idea-to-code pipeline usin
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 1: Foundation** - ralph-tools.cjs CLI + .planning/ schema + pre-flight skeleton
-- [ ] **Phase 2: Orchestrator Shell** - SKILL.md entry point, phase sequencing, /clear boundary pattern, user gates
-- [ ] **Phase 3: Phase Content** - Research, PRD, Deepen, and Resolution subagent prompts
+- [x] **Phase 2: Orchestrator Shell** - SKILL.md entry point, phase sequencing, /clear boundary pattern, user gates
+- [x] **Phase 3: Phase Content** - Research, PRD, Deepen, and Resolution subagent prompts
 - [ ] **Phase 4: Execution Layer** - Conversion, headless execution, bead results, compound review
 - [ ] **Phase 5: Advanced Features** - YOLO mode, auto-advance chain, time budget, configurable depth
 
@@ -49,8 +49,8 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. The user gate appears between phases with approve/redirect/replan options -- selecting redirect sends the subagent back to revise output
   4. Simulating a /clear mid-pipeline and re-invoking the skill resumes from the last incomplete phase, not from Phase 1
 **Plans**: 2 plans
-- [ ] 02-01-PLAN.md -- TDD: lib/orchestrator.cjs (pipeline phase map, scanning, position detection, template filling, excerpt) + tests + CLI wiring
-- [ ] 02-02-PLAN.md -- SKILL.md orchestrator rewrite (sequencing, dispatch, gates, /clear recovery) + 9 stub template files in templates/
+- [x] 02-01-PLAN.md -- TDD: lib/orchestrator.cjs (pipeline phase map, scanning, position detection, template filling, excerpt) + tests + CLI wiring
+- [x] 02-02-PLAN.md -- SKILL.md orchestrator rewrite (sequencing, dispatch, gates, /clear recovery) + 9 stub template files in templates/
 
 ### Phase 3: Phase Content
 **Goal**: Research, PRD, Deepen, and Resolution phases each have working subagent prompts that invoke chained skills correctly and produce validated output
@@ -64,8 +64,8 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. Deepen phase runs four parallel review agents against the PRD and presents findings with a gate: refine, re-run, or proceed
   5. Resolution gate blocks conversion until every [TBD], [TODO], and [PLACEHOLDER] pattern in the PRD has been resolved via AskUserQuestion
 **Plans**: 2 plans
-- [ ] 03-01-PLAN.md -- Research + PRD templates (parallel agent dispatch, skill chaining, validation, open questions)
-- [ ] 03-02-PLAN.md -- Deepen + Resolve templates + PHASE_FILES (review agents, refine/re-run/proceed gate, TBD resolution, orchestrator dispatch)
+- [x] 03-01-PLAN.md -- Research + PRD templates (parallel agent dispatch, skill chaining, validation, open questions)
+- [x] 03-02-PLAN.md -- Deepen + Resolve templates + PHASE_FILES (review agents, refine/re-run/proceed gate, TBD resolution, orchestrator dispatch)
 
 ### Phase 4: Execution Layer
 **Goal**: Beads can be generated, executed headlessly, and reviewed -- the full conversion-to-review loop completes without manual intervention beyond the execution gate
@@ -100,7 +100,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 5/5 | Complete | 2026-02-25 |
-| 2. Orchestrator Shell | 0/TBD | Not started | - |
-| 3. Phase Content | 0/TBD | Not started | - |
+| 2. Orchestrator Shell | 2/2 | Complete | 2026-02-25 |
+| 3. Phase Content | 2/2 | Complete | 2026-02-25 |
 | 4. Execution Layer | 0/TBD | Not started | - |
 | 5. Advanced Features | 0/TBD | Not started | - |

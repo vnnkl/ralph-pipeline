@@ -43,14 +43,14 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Deepen Phase
 
-- [ ] **DEEP-01**: Parallel review agents run against PRD (security-sentinel, architecture-strategist, code-simplicity-reviewer, performance-oracle)
-- [ ] **DEEP-02**: Review findings incorporated into PRD with gate: refine, re-run, or proceed
+- [x] **DEEP-01**: Parallel review agents run against PRD (security-sentinel, architecture-strategist, code-simplicity-reviewer, performance-oracle)
+- [x] **DEEP-02**: Review findings incorporated into PRD with gate: refine, re-run, or proceed
 
 ### Resolution Phase
 
-- [ ] **RSLV-01**: Blocking gate: all open questions must be resolved before conversion proceeds
-- [ ] **RSLV-02**: Each open question presented via AskUserQuestion with concrete options
-- [ ] **RSLV-03**: PRD updated with answers; open-questions file marked resolved
+- [x] **RSLV-01**: Blocking gate: all open questions must be resolved before conversion proceeds
+- [x] **RSLV-02**: Each open question presented via AskUserQuestion with concrete options
+- [x] **RSLV-03**: PRD updated with answers; open-questions file marked resolved
 
 ### Conversion Phase
 
@@ -133,11 +133,11 @@ Requirements for initial release. Each maps to roadmap phases.
 | PRD-01 | Phase 3 | Complete |
 | PRD-02 | Phase 3 | Complete |
 | PRD-03 | Phase 3 | Complete |
-| DEEP-01 | Phase 3 | Pending |
-| DEEP-02 | Phase 3 | Pending |
-| RSLV-01 | Phase 3 | Pending |
-| RSLV-02 | Phase 3 | Pending |
-| RSLV-03 | Phase 3 | Pending |
+| DEEP-01 | Phase 3 | Complete |
+| DEEP-02 | Phase 3 | Complete |
+| RSLV-01 | Phase 3 | Complete |
+| RSLV-02 | Phase 3 | Complete |
+| RSLV-03 | Phase 3 | Complete |
 | CONV-01 | Phase 4 | Pending |
 | CONV-02 | Phase 4 | Pending |
 | CONV-03 | Phase 4 | Pending |
