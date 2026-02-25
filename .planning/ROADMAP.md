@@ -63,7 +63,9 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. PRD output contains a tracer bullet US-001 story that includes DB, backend, and frontend layers -- a horizontal-only slice is rejected
   4. Deepen phase runs four parallel review agents against the PRD and presents findings with a gate: refine, re-run, or proceed
   5. Resolution gate blocks conversion until every [TBD], [TODO], and [PLACEHOLDER] pattern in the PRD has been resolved via AskUserQuestion
-**Plans**: TBD
+**Plans**: 2 plans
+- [ ] 03-01-PLAN.md -- Research + PRD templates (parallel agent dispatch, skill chaining, validation, open questions)
+- [ ] 03-02-PLAN.md -- Deepen + Resolve templates + PHASE_FILES (review agents, refine/re-run/proceed gate, TBD resolution, orchestrator dispatch)
 
 ### Phase 4: Execution Layer
 **Goal**: Beads can be generated, executed headlessly, and reviewed -- the full conversion-to-review loop completes without manual intervention beyond the execution gate
