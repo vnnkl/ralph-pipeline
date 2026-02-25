@@ -68,9 +68,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Review Phase
 
-- [ ] **REVW-01**: Parallel review agents run post-execution (security, architecture, performance, simplicity)
-- [ ] **REVW-02**: Findings categorized P1/P2/P3 with actionable fix suggestions
-- [ ] **REVW-03**: Review gate: fix P1s, fix P1+P2, skip, re-run, or create PR
+- [x] **REVW-01**: Parallel review agents run post-execution (security, architecture, performance, simplicity)
+- [x] **REVW-02**: Findings categorized P1/P2/P3 with actionable fix suggestions
+- [x] **REVW-03**: Review gate: fix P1s, fix P1+P2, skip, re-run, or create PR
 
 ### Time Budget
 
@@ -146,9 +146,9 @@ Requirements for initial release. Each maps to roadmap phases.
 | EXEC-02 | Phase 4 | Complete |
 | EXEC-03 | Phase 4 | Complete |
 | EXEC-04 | Phase 4 | Complete |
-| REVW-01 | Phase 4 | Pending |
-| REVW-02 | Phase 4 | Pending |
-| REVW-03 | Phase 4 | Pending |
+| REVW-01 | Phase 4 | Complete |
+| REVW-02 | Phase 4 | Complete |
+| REVW-03 | Phase 4 | Complete |
 | TIME-01 | Phase 5 | Pending |
 | TIME-02 | Phase 5 | Pending |
 | TIME-03 | Phase 5 | Pending |
