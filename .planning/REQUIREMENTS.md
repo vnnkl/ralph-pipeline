@@ -54,10 +54,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Conversion Phase
 
-- [ ] **CONV-01**: Conversion gate: user chooses bead format (bd Go beads / br Rust beads / prd.json)
-- [ ] **CONV-02**: Bead conversion by invoking /ralph-tui-create-beads or /ralph-tui-create-beads-rust skill (chain, don't reimplement)
-- [ ] **CONV-03**: Frontend stories inject /frontend-design skill as first instruction in bead acceptance criteria
-- [ ] **CONV-04**: Configurable depth affects bead granularity (quick: fewer larger beads, comprehensive: more granular beads)
+- [x] **CONV-01**: Conversion gate: user chooses bead format (bd Go beads / br Rust beads / prd.json)
+- [x] **CONV-02**: Bead conversion by invoking /ralph-tui-create-beads or /ralph-tui-create-beads-rust skill (chain, don't reimplement)
+- [x] **CONV-03**: Frontend stories inject /frontend-design skill as first instruction in bead acceptance criteria
+- [x] **CONV-04**: Configurable depth affects bead granularity (quick: fewer larger beads, comprehensive: more granular beads)
 
 ### Execution Phase
 
@@ -138,10 +138,10 @@ Requirements for initial release. Each maps to roadmap phases.
 | RSLV-01 | Phase 3 | Complete |
 | RSLV-02 | Phase 3 | Complete |
 | RSLV-03 | Phase 3 | Complete |
-| CONV-01 | Phase 4 | Pending |
-| CONV-02 | Phase 4 | Pending |
-| CONV-03 | Phase 4 | Pending |
-| CONV-04 | Phase 4 | Pending |
+| CONV-01 | Phase 4 | Complete |
+| CONV-02 | Phase 4 | Complete |
+| CONV-03 | Phase 4 | Complete |
+| CONV-04 | Phase 4 | Complete |
 | EXEC-01 | Phase 4 | Complete |
 | EXEC-02 | Phase 4 | Complete |
 | EXEC-03 | Phase 4 | Complete |

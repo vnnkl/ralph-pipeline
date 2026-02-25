@@ -90,6 +90,9 @@ Recent decisions affecting current work:
 - Deepen iteration cap at 3 with forced proceed (03-02)
 - Resolve vague answer detection re-asks once then accepts DECISION_PENDING format (03-02)
 - Resolve re-scan validation loop capped at 3 passes (03-02)
+- Always ask bead format via AskUserQuestion -- no config default (04-01)
+- UI keyword matching uses word boundary to prevent false positives in frontend detection (04-01)
+- One retry allowed on zero-bead error before requiring manual intervention (04-01)
 - EXEC-04 reconciliation: bead agent enforces tests/type checks internally; pipeline trusts exit code (04-02)
 - Stdin piping for large beads: cat bead.md | env -u CLAUDECODE claude -p (04-02)
 - Manual mode scans for ralph-tui result files before asking user for pass/fail (04-02)
@@ -105,5 +108,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-25
-Stopped at: Completed 04-02-PLAN.md (execute template with headless/manual modes)
-Resume file: .planning/phases/04-execution-layer/04-02-SUMMARY.md
+Stopped at: Completed 04-01-PLAN.md (convert template with bead format gate + skill chaining)
+Resume file: .planning/phases/04-execution-layer/04-01-SUMMARY.md
