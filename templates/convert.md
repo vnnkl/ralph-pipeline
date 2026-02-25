@@ -171,6 +171,25 @@ Track the count of beads injected as `FRONTEND_BEAD_COUNT`.
 
 Log: "Injected /frontend-design into {N} frontend beads: {list}" or "No frontend beads to inject."
 
+### Step 6.5: Inject Quality Gate Acceptance Criteria
+
+For ALL bead files (not just frontend beads), ensure quality gate requirements are present in acceptance criteria.
+
+For each bead file in .beads/*.md:
+
+1. Read the bead file content
+2. Find the acceptance criteria section (same detection as Step 6)
+3. If the acceptance criteria do NOT already contain "tests pass" or "type check" or "quality gate":
+   - Append the following to the end of the acceptance criteria:
+
+   ```
+   - Quality gates: All relevant tests must pass and type checks must succeed before marking this bead complete.
+   ```
+
+4. Write the updated bead file back
+
+Log: "Injected quality gate acceptance criteria into {N} beads."
+
 ### Step 7: Write Completion File
 
 Count the total validated bead files:
