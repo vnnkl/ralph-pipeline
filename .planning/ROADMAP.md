@@ -48,7 +48,9 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. A phase subagent completes, sets completed: true in its output file, and the orchestrator advances STATE.md without reading the file contents
   3. The user gate appears between phases with approve/redirect/replan options -- selecting redirect sends the subagent back to revise output
   4. Simulating a /clear mid-pipeline and re-invoking the skill resumes from the last incomplete phase, not from Phase 1
-**Plans**: TBD
+**Plans**: 2 plans
+- [ ] 02-01-PLAN.md -- TDD: lib/orchestrator.cjs (pipeline phase map, scanning, position detection, template filling, excerpt) + tests + CLI wiring
+- [ ] 02-02-PLAN.md -- SKILL.md orchestrator rewrite (sequencing, dispatch, gates, /clear recovery) + 9 stub template files in templates/
 
 ### Phase 3: Phase Content
 **Goal**: Research, PRD, Deepen, and Resolution phases each have working subagent prompts that invoke chained skills correctly and produce validated output
