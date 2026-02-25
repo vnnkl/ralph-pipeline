@@ -61,10 +61,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Execution Phase
 
-- [ ] **EXEC-01**: Execution gate per phase: user chooses headless (claude -p per bead) or manual (launch ralph-tui)
-- [ ] **EXEC-02**: Headless mode: pipeline orchestrates claude -p per bead with structured exit codes
-- [ ] **EXEC-03**: Bead results written to structured results directory with pass/fail per bead
-- [ ] **EXEC-04**: Quality gates from PRD enforced per bead (tests pass, type checks pass)
+- [x] **EXEC-01**: Execution gate per phase: user chooses headless (claude -p per bead) or manual (launch ralph-tui)
+- [x] **EXEC-02**: Headless mode: pipeline orchestrates claude -p per bead with structured exit codes
+- [x] **EXEC-03**: Bead results written to structured results directory with pass/fail per bead
+- [x] **EXEC-04**: Quality gates from PRD enforced per bead (tests pass, type checks pass)
 
 ### Review Phase
 
@@ -142,10 +142,10 @@ Requirements for initial release. Each maps to roadmap phases.
 | CONV-02 | Phase 4 | Pending |
 | CONV-03 | Phase 4 | Pending |
 | CONV-04 | Phase 4 | Pending |
-| EXEC-01 | Phase 4 | Pending |
-| EXEC-02 | Phase 4 | Pending |
-| EXEC-03 | Phase 4 | Pending |
-| EXEC-04 | Phase 4 | Pending |
+| EXEC-01 | Phase 4 | Complete |
+| EXEC-02 | Phase 4 | Complete |
+| EXEC-03 | Phase 4 | Complete |
+| EXEC-04 | Phase 4 | Complete |
 | REVW-01 | Phase 4 | Pending |
 | REVW-02 | Phase 4 | Pending |
 | REVW-03 | Phase 4 | Pending |
