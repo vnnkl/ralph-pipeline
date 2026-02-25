@@ -30,6 +30,7 @@ const phase = require('./lib/phase.cjs');
 const commands = require('./lib/commands.cjs');
 const preflight = require('./lib/preflight.cjs');
 const init = require('./lib/init.cjs');
+const orchestrator = require('./lib/orchestrator.cjs');
 
 // -- CLI Argument Parsing -----------------------------------------------------
 
@@ -78,6 +79,8 @@ function showHelp(raw) {
     'setup-reference': 'Copy GSD reference to .reference/ with version pinning',
     'setup-gitignore': 'Add pattern to .gitignore (e.g., .reference/)',
     'init': 'Compound init commands: init pipeline, init phase <N>',
+    'scan-phases': 'Scan pipeline phases: completion status of all 9 phases',
+    'excerpt': 'Extract first N non-frontmatter lines from a file',
     'help': 'Show this help message',
   };
   output({ commands }, raw);
@@ -244,6 +247,16 @@ function main() {
 
     case 'preflight': {
       preflight.cmdPreflight(cwd, raw);
+      break;
+    }
+
+    case 'scan-phases': {
+      orchestrator.cmdScanPhases(cwd, raw);
+      break;
+    }
+
+    case 'excerpt': {
+      orchestrator.cmdExcerpt(cwd, args[1], args[2] ? parseInt(args[2], 10) : undefined, raw);
       break;
     }
 

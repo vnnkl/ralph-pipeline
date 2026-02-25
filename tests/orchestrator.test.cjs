@@ -287,9 +287,10 @@ test('excerptFile returns first N non-frontmatter lines', () => {
     const result = excerptFile(filePath, 3);
     const lines = result.split('\n');
     assert.strictEqual(lines.length, 3);
-    assert.strictEqual(lines[0], '');
-    assert.strictEqual(lines[1], 'Line 1');
-    assert.strictEqual(lines[2], 'Line 2');
+    // Frontmatter and trailing newlines after --- are stripped
+    assert.strictEqual(lines[0], 'Line 1');
+    assert.strictEqual(lines[1], 'Line 2');
+    assert.strictEqual(lines[2], 'Line 3');
   } finally {
     cleanupTempDir(tmpDir);
   }
