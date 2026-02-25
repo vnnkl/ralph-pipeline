@@ -9,7 +9,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Core Orchestration
 
-- [ ] **ORCH-01**: Plugin ships as installable Claude Code skill (SKILL.md + ralph-tools.cjs + templates/)
+- [x] **ORCH-01**: Plugin ships as installable Claude Code skill (SKILL.md + ralph-tools.cjs + templates/)
 - [x] **ORCH-02**: Pre-flight detects user's IDE environment (or asks) and checks only relevant dependencies (ralph-tui, bd/br CLIs, required skills) — no bloat installs
 - [ ] **ORCH-03**: Pipeline executes phases sequentially: pre-flight → clarify → research → PRD → deepen → resolve → convert → execute → review
 - [ ] **ORCH-04**: Each phase transition triggers /clear for true context isolation (fresh session per phase)
@@ -23,7 +23,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **STATE-01**: ralph-tools.cjs is a single .cjs file with zero npm dependencies
 - [x] **STATE-02**: ralph-tools.cjs handles all state mutations (advance phase, mark complete, update progress)
 - [x] **STATE-03**: ralph-tools.cjs handles git commits with conditional logic (commit_docs flag, .gitignore check)
-- [ ] **STATE-04**: ralph-tools.cjs provides compound `init` commands that load all context in one call
+- [x] **STATE-04**: ralph-tools.cjs provides compound `init` commands that load all context in one call
 - [x] **STATE-05**: State persisted to .planning/ as YAML frontmatter + markdown body (machine + human readable)
 - [x] **STATE-06**: Each phase output file has `completed: true/false` flag for crash recovery
 - [ ] **STATE-07**: GSD-style resumability: on invocation, read STATE.md to determine current phase and resume from last incomplete phase
@@ -111,7 +111,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ORCH-01 | Phase 1 | Pending |
+| ORCH-01 | Phase 1 | Complete |
 | ORCH-02 | Phase 1 | Complete |
 | ORCH-03 | Phase 2 | Pending |
 | ORCH-04 | Phase 2 | Pending |
@@ -122,7 +122,7 @@ Requirements for initial release. Each maps to roadmap phases.
 | STATE-01 | Phase 1 | Complete |
 | STATE-02 | Phase 1 | Complete |
 | STATE-03 | Phase 1 | Complete |
-| STATE-04 | Phase 1 | Pending |
+| STATE-04 | Phase 1 | Complete |
 | STATE-05 | Phase 1 | Complete |
 | STATE-06 | Phase 1 | Complete |
 | STATE-07 | Phase 2 | Pending |
