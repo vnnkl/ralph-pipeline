@@ -31,7 +31,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Running `node ralph-tools.cjs phase-complete 1` advances STATE.md current_phase and writes a dated entry -- readable in a new shell session with no in-memory state
   4. Pre-flight detects a missing required skill (e.g., /ralph-tui-prd not installed) and exits with a clear blocking error -- not a warning
   5. The skill is installable as a Claude Code skill (SKILL.md present, correct frontmatter, slash-command registers)
-**Plans**: TBD
+**Plans**: 4 plans
+- [ ] 01-01-PLAN.md -- Core infrastructure: lib/core.cjs, lib/frontmatter.cjs, lib/config.cjs, ralph-tools.cjs router
+- [ ] 01-02-PLAN.md -- State management (TDD): lib/state.cjs, lib/phase.cjs, lib/commands.cjs
+- [ ] 01-03-PLAN.md -- Pre-flight + GSD reference: lib/preflight.cjs, setup commands
+- [ ] 01-04-PLAN.md -- Compound init + SKILL.md: lib/init.cjs, SKILL.md rewrite
 
 ### Phase 2: Orchestrator Shell
 **Goal**: SKILL.md can sequence phases, dispatch Task subagents, verify completion flags, and present user gates -- the /clear boundary pattern works end-to-end for at least two phases
@@ -90,7 +94,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/TBD | Not started | - |
+| 1. Foundation | 0/4 | Planned | - |
 | 2. Orchestrator Shell | 0/TBD | Not started | - |
 | 3. Phase Content | 0/TBD | Not started | - |
 | 4. Execution Layer | 0/TBD | Not started | - |
