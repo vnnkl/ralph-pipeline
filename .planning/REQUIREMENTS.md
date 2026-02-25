@@ -16,6 +16,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **ORCH-05**: User gates between phases via AskUserQuestion (approve/redirect/replan)
 - [ ] **ORCH-06**: YOLO mode auto-approves all gates without user interaction
 - [ ] **ORCH-07**: Auto-advance chain (--auto flag): phases advance hands-free from research through review
+- [ ] **ORCH-08**: GSD repo cloned to .reference/get-shit-done/ and gitignored as authoritative implementation reference — subagents Read actual source files rather than relying on training data
 
 ### State Management
 
@@ -117,6 +118,7 @@ Requirements for initial release. Each maps to roadmap phases.
 | ORCH-05 | Phase 2 | Pending |
 | ORCH-06 | Phase 5 | Pending |
 | ORCH-07 | Phase 5 | Pending |
+| ORCH-08 | Phase 1 | Pending |
 | STATE-01 | Phase 1 | Pending |
 | STATE-02 | Phase 1 | Pending |
 | STATE-03 | Phase 1 | Pending |
@@ -153,10 +155,10 @@ Requirements for initial release. Each maps to roadmap phases.
 | TIME-04 | Phase 5 | Pending |
 
 **Coverage:**
-- v1 requirements: 37 total
-- Mapped to phases: 37
+- v1 requirements: 42 total
+- Mapped to phases: 42
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-02-25*
-*Last updated: 2026-02-25 after initial definition*
+*Last updated: 2026-02-25 — added ORCH-08 (GSD reference repo requirement; total now 42)*
