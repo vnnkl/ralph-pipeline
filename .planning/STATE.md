@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-02-25T19:34:41Z"
+last_updated: "2026-02-25T19:41:05Z"
 progress:
   total_phases: 2
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 6
-  completed_plans: 5
+  completed_plans: 6
 ---
 
 # Project State
@@ -22,29 +22,29 @@ See: .planning/PROJECT.md (updated 2026-02-25)
 
 ## Current Position
 
-Phase: 2 of 5 (Orchestrator Shell)
-Plan: 1 of 2 in current phase
-Status: Executing
-Last activity: 2026-02-25 -- Completed 02-01 (orchestrator module: scanning, position, templates)
+Phase: 2 of 5 (Orchestrator Shell) -- COMPLETE
+Plan: 2 of 2 in current phase
+Status: Phase 2 complete
+Last activity: 2026-02-25 -- Completed 02-02 (orchestrator shell: SKILL.md rewrite, 9 templates)
 
-Progress: [███████░░░] 78%
+Progress: [████████░░] 83%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5
+- Total plans completed: 6
 - Average duration: 4min
-- Total execution time: 0.32 hours
+- Total execution time: 0.37 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1 - Foundation | 4/4 | 16min | 4min |
-| 2 - Orchestrator Shell | 1/2 | 3min | 3min |
+| 2 - Orchestrator Shell | 2/2 | 6min | 3min |
 
 **Recent Trend:**
-- Last 5 plans: 01-02 (6min), 01-03 (4min), 01-04 (3min), 01-05 (n/a), 02-01 (3min)
+- Last 5 plans: 01-03 (4min), 01-04 (3min), 01-05 (n/a), 02-01 (3min), 02-02 (3min)
 - Trend: stable
 
 *Updated after each plan completion*
@@ -75,6 +75,10 @@ Recent decisions affecting current work:
 - Trust file scan over STATE.md on mismatch for position detection (02-01)
 - fillTemplate matches only uppercase {{A-Z_}} patterns to avoid false positives (02-01)
 - Frontmatter stripping regex uses \n* to consume trailing newlines after --- for clean excerpts (02-01)
+- Templates use common skeleton with phase-specific TODO notes for build phases 3-5 (02-02)
+- Dual completion verification: Task return message + file scan must agree (02-02)
+- Auto-retry once on phase failure before presenting failure gate (02-02)
+- Manual mode suggests /clear; auto mode dispatches next phase directly via Task (02-02)
 
 ### Pending Todos
 
@@ -88,5 +92,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-25
-Stopped at: Completed 02-01-PLAN.md (orchestrator module)
-Resume file: .planning/phases/02-orchestrator-shell/02-01-SUMMARY.md
+Stopped at: Completed 02-02-PLAN.md (orchestrator shell + templates)
+Resume file: .planning/phases/02-orchestrator-shell/02-02-SUMMARY.md
