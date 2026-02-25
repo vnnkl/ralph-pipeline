@@ -11,7 +11,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [x] **ORCH-01**: Plugin ships as installable Claude Code skill (SKILL.md + ralph-tools.cjs + templates/)
 - [x] **ORCH-02**: Pre-flight detects user's IDE environment (or asks) and checks only relevant dependencies (ralph-tui, bd/br CLIs, required skills) — no bloat installs
-- [ ] **ORCH-03**: Pipeline executes phases sequentially: pre-flight → clarify → research → PRD → deepen → resolve → convert → execute → review
+- [x] **ORCH-03**: Pipeline executes phases sequentially: pre-flight → clarify → research → PRD → deepen → resolve → convert → execute → review
 - [ ] **ORCH-04**: Each phase transition triggers /clear for true context isolation (fresh session per phase)
 - [ ] **ORCH-05**: User gates between phases via AskUserQuestion (approve/redirect/replan)
 - [ ] **ORCH-06**: YOLO mode auto-approves all gates without user interaction
@@ -26,7 +26,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **STATE-04**: ralph-tools.cjs provides compound `init` commands that load all context in one call
 - [x] **STATE-05**: State persisted to .planning/ as YAML frontmatter + markdown body (machine + human readable)
 - [x] **STATE-06**: Each phase output file has `completed: true/false` flag for crash recovery
-- [ ] **STATE-07**: GSD-style resumability: on invocation, read STATE.md to determine current phase and resume from last incomplete phase
+- [x] **STATE-07**: GSD-style resumability: on invocation, read STATE.md to determine current phase and resume from last incomplete phase
 - [x] **STATE-08**: config.json stores workflow preferences (mode, depth, parallelization, model_profile, time_budget)
 
 ### Research Phase
@@ -113,7 +113,7 @@ Requirements for initial release. Each maps to roadmap phases.
 |-------------|-------|--------|
 | ORCH-01 | Phase 1 | Complete |
 | ORCH-02 | Phase 1 | Complete |
-| ORCH-03 | Phase 2 | Pending |
+| ORCH-03 | Phase 2 | Complete |
 | ORCH-04 | Phase 2 | Pending |
 | ORCH-05 | Phase 2 | Pending |
 | ORCH-06 | Phase 5 | Pending |
@@ -125,7 +125,7 @@ Requirements for initial release. Each maps to roadmap phases.
 | STATE-04 | Phase 1 | Complete |
 | STATE-05 | Phase 1 | Complete |
 | STATE-06 | Phase 1 | Complete |
-| STATE-07 | Phase 2 | Pending |
+| STATE-07 | Phase 2 | Complete |
 | STATE-08 | Phase 1 | Complete |
 | RSRCH-01 | Phase 3 | Pending |
 | RSRCH-02 | Phase 3 | Pending |
