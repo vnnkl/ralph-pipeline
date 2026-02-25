@@ -11,20 +11,26 @@
  * Commands:
  *   config-get [key]              Get config value (dot-notation) or full dump
  *   config-set <key> <value>      Set config value with type coercion
+ *   state <sub> [args]            State management: get, set, json
+ *   commit <message> [files...]   Git commit with conditional logic
+ *   phase-complete <phase>        Mark phase as complete (advances state)
+ *   preflight                     Pre-flight dependency checks
+ *   setup-reference               Copy GSD reference to .reference/ with version pinning
+ *   setup-gitignore <pattern>     Add pattern to .gitignore
  *   help                          List available commands
  *
  * Planned (not yet implemented):
- *   state                         State management operations
  *   init                          Compound init commands
- *   commit                        Git commit with conditional logic
- *   phase-complete                Mark phase as complete
- *   preflight                     Pre-flight dependency checks
  */
 
 const fs = require('fs');
 const path = require('path');
-const { output, error } = require('./lib/core.cjs');
+const { output, error, safeReadFile } = require('./lib/core.cjs');
 const config = require('./lib/config.cjs');
+const state = require('./lib/state.cjs');
+const phase = require('./lib/phase.cjs');
+const commands = require('./lib/commands.cjs');
+const preflight = require('./lib/preflight.cjs');
 
 // -- CLI Argument Parsing -----------------------------------------------------
 
@@ -66,14 +72,118 @@ function showHelp(raw) {
   const commands = {
     'config-get': 'Get config value by dot-notation key, or dump full config',
     'config-set': 'Set config value with type coercion (bool, number, null)',
-    'state': '(planned) State management operations',
+    'state': 'State management: get <field>, set <field> <value>, json',
+    'commit': 'Git commit with conditional logic (respects commit_docs, gitignore)',
+    'phase-complete': 'Mark phase as complete (updates ROADMAP.md + STATE.md)',
+    'preflight': 'Pre-flight dependency checks (skills, MCP, CLIs, GSD reference)',
+    'setup-reference': 'Copy GSD reference to .reference/ with version pinning',
+    'setup-gitignore': 'Add pattern to .gitignore (e.g., .reference/)',
     'init': '(planned) Compound init commands',
-    'commit': '(planned) Git commit with conditional logic',
-    'phase-complete': '(planned) Mark phase as complete',
-    'preflight': '(planned) Pre-flight dependency checks',
     'help': 'Show this help message',
   };
   output({ commands }, raw);
+}
+
+// -- Setup Reference ----------------------------------------------------------
+
+const EXPECTED_GSD_VERSION = 'v2.1.0';
+
+function setupReference(cwd, raw) {
+  const os = require('os');
+  const homeGsdPath = path.join(os.homedir(), '.claude', 'get-shit-done');
+  const targetDir = path.join(cwd, '.reference');
+  const targetPath = path.join(targetDir, 'get-shit-done');
+
+  // Check source exists
+  try {
+    fs.statSync(homeGsdPath);
+  } catch {
+    error('GSD not found at ' + homeGsdPath + '. Install GSD plugin first.', 'GSD_NOT_FOUND');
+  }
+
+  // Create .reference/ directory
+  try {
+    if (!fs.existsSync(targetDir)) {
+      fs.mkdirSync(targetDir, { recursive: true });
+    }
+  } catch (err) {
+    error('Failed to create .reference/ directory: ' + err.message, 'MKDIR_FAILED');
+  }
+
+  // Copy GSD reference (use fs.cpSync on Node 16.7+, fallback to cp -r)
+  try {
+    if (typeof fs.cpSync === 'function') {
+      // Remove existing target first for clean copy
+      if (fs.existsSync(targetPath)) {
+        fs.rmSync(targetPath, { recursive: true, force: true });
+      }
+      fs.cpSync(homeGsdPath, targetPath, { recursive: true });
+    } else {
+      const { execSync } = require('child_process');
+      if (fs.existsSync(targetPath)) {
+        execSync(`rm -rf "${targetPath}"`);
+      }
+      execSync(`cp -r "${homeGsdPath}" "${targetPath}"`);
+    }
+  } catch (err) {
+    error('Failed to copy GSD reference: ' + err.message, 'COPY_FAILED');
+  }
+
+  // Read actual version from copied reference
+  let actualVersion = null;
+  const versionContent = safeReadFile(path.join(targetPath, 'VERSION'));
+  if (versionContent) {
+    actualVersion = versionContent.trim();
+  } else {
+    const pkgContent = safeReadFile(path.join(targetPath, 'package.json'));
+    if (pkgContent) {
+      try {
+        actualVersion = JSON.parse(pkgContent).version || null;
+      } catch {
+        // ignore
+      }
+    }
+  }
+
+  // Add .reference/ to .gitignore
+  setupGitignoreInternal(cwd, '.reference/');
+
+  output({
+    setup: true,
+    reference_path: '.reference/get-shit-done/',
+    version: actualVersion,
+    expected_version: EXPECTED_GSD_VERSION,
+    version_matched: actualVersion === EXPECTED_GSD_VERSION,
+  }, raw);
+}
+
+// -- Setup Gitignore ----------------------------------------------------------
+
+function setupGitignoreInternal(cwd, pattern) {
+  const gitignorePath = path.join(cwd, '.gitignore');
+  const content = safeReadFile(gitignorePath) || '';
+  const lines = content.split('\n').map(l => l.trim());
+  const patternTrimmed = pattern.trim();
+
+  if (lines.some(l => l === patternTrimmed || l === patternTrimmed.replace(/\/$/, ''))) {
+    return false;
+  }
+
+  const newContent = content.endsWith('\n') || content === ''
+    ? content + patternTrimmed + '\n'
+    : content + '\n' + patternTrimmed + '\n';
+
+  try {
+    fs.writeFileSync(gitignorePath, newContent, 'utf-8');
+    return true;
+  } catch (err) {
+    error('Failed to update .gitignore: ' + err.message, 'GITIGNORE_WRITE_FAILED');
+  }
+}
+
+function setupGitignore(cwd, pattern, raw) {
+  const added = setupGitignoreInternal(cwd, pattern);
+  output({ added: added !== false, pattern }, raw);
 }
 
 // -- Main Router --------------------------------------------------------------
@@ -106,30 +216,42 @@ function main() {
       break;
     }
 
-    // -- Planned commands (not yet implemented) --------------------------------
-
     case 'state': {
-      error('Command "state" not yet implemented', 'NOT_IMPLEMENTED');
+      state.cmdState(cwd, args[1], args.slice(2), raw);
       break;
     }
+
+    case 'commit': {
+      commands.cmdCommit(cwd, args[1], args.slice(2), raw);
+      break;
+    }
+
+    case 'phase-complete': {
+      phase.cmdPhaseComplete(cwd, args[1], raw);
+      break;
+    }
+
+    // -- Planned commands (not yet implemented) --------------------------------
 
     case 'init': {
       error('Command "init" not yet implemented', 'NOT_IMPLEMENTED');
       break;
     }
 
-    case 'commit': {
-      error('Command "commit" not yet implemented', 'NOT_IMPLEMENTED');
-      break;
-    }
-
-    case 'phase-complete': {
-      error('Command "phase-complete" not yet implemented', 'NOT_IMPLEMENTED');
-      break;
-    }
-
     case 'preflight': {
-      error('Command "preflight" not yet implemented', 'NOT_IMPLEMENTED');
+      preflight.cmdPreflight(cwd, raw);
+      break;
+    }
+
+    case 'setup-reference': {
+      setupReference(cwd, raw);
+      break;
+    }
+
+    case 'setup-gitignore': {
+      const pattern = args[1];
+      if (!pattern) error('Usage: setup-gitignore <pattern>', 'INVALID_ARGS');
+      setupGitignore(cwd, pattern, raw);
       break;
     }
 
