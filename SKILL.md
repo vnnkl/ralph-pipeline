@@ -116,7 +116,21 @@ Fill template variables using the `fillTemplate` function from `lib/orchestrator
 | `{{PHASE_ID}}` | Phase number (1-9) |
 | `{{STATE_PATH}}` | `.planning/STATE.md` |
 | `{{CONFIG_PATH}}` | `.planning/config.json` |
-| `{{PHASE_FILES}}` | Phase-specific file references (empty string for stubs) |
+| `{{PHASE_FILES}}` | Phase-specific upstream dependency files (computed per phase, see table below) |
+
+**PHASE_FILES per phase:**
+
+| Phase | PHASE_FILES Value |
+|-------|-------------------|
+| 1 - preflight | *(empty)* |
+| 2 - clarify | *(empty)* |
+| 3 - research | `- .planning/pipeline/clarify.md` |
+| 4 - prd | `- .planning/research/SUMMARY.md\n- .planning/pipeline/clarify.md` |
+| 5 - deepen | `- .planning/pipeline/prd.md` |
+| 6 - resolve | `- .planning/pipeline/prd.md\n- .planning/pipeline/open-questions.md` |
+| 7 - convert | `- .planning/pipeline/prd.md` |
+| 8 - execute | *(empty)* |
+| 9 - review | *(empty)* |
 
 Dispatch the filled template content as a **Task subagent**. The Task tool provides inherent context isolation -- the subagent runs in its own context window.
 
@@ -227,7 +241,7 @@ This skill uses /clear between phases. Each phase is a fresh Claude session. Sta
 1. Orchestrator calls `ralph-tools.cjs init pipeline` to load context
 2. Runs `ralph-tools.cjs scan-phases` to detect position from disk
 3. Compares file scan with STATE.md, trusts file scan on mismatch
-4. Reads template from `templates/{phase}.md`, fills variables via `fillTemplate`
+4. Reads template from `templates/{phase}.md`, fills variables via `fillTemplate` (`PHASE_FILES` computed per phase from upstream dependency chain)
 5. Dispatches filled template as Task subagent (context-isolated)
 6. Verifies completion: checks Task return message + scans output files
 7. Presents context-dependent user gate (options from `PIPELINE_PHASES[phase].gateOptions`)
