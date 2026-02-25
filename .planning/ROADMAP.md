@@ -33,7 +33,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   5. The skill is installable as a Claude Code skill (SKILL.md present, correct frontmatter, slash-command registers)
 **Plans**: 4 plans
 - [x] 01-01-PLAN.md -- Core infrastructure: lib/core.cjs, lib/frontmatter.cjs, lib/config.cjs, ralph-tools.cjs router
-- [ ] 01-02-PLAN.md -- State management (TDD): lib/state.cjs, lib/phase.cjs, lib/commands.cjs
+- [x] 01-02-PLAN.md -- State management (TDD): lib/state.cjs, lib/phase.cjs, lib/commands.cjs
 - [x] 01-03-PLAN.md -- Pre-flight + GSD reference: lib/preflight.cjs, setup commands
 - [ ] 01-04-PLAN.md -- Compound init + SKILL.md: lib/init.cjs, SKILL.md rewrite
 
@@ -94,7 +94,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 2/4 | In Progress | - |
+| 1. Foundation | 3/4 | In Progress | - |
 | 2. Orchestrator Shell | 0/TBD | Not started | - |
 | 3. Phase Content | 0/TBD | Not started | - |
 | 4. Execution Layer | 0/TBD | Not started | - |
