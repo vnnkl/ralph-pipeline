@@ -12,15 +12,13 @@
  *   config-get [key]              Get config value (dot-notation) or full dump
  *   config-set <key> <value>      Set config value with type coercion
  *   state <sub> [args]            State management: get, set, json
+ *   init [pipeline|phase <N>]     Compound init commands (all context in one call)
  *   commit <message> [files...]   Git commit with conditional logic
  *   phase-complete <phase>        Mark phase as complete (advances state)
  *   preflight                     Pre-flight dependency checks
  *   setup-reference               Copy GSD reference to .reference/ with version pinning
  *   setup-gitignore <pattern>     Add pattern to .gitignore
  *   help                          List available commands
- *
- * Planned (not yet implemented):
- *   init                          Compound init commands
  */
 
 const fs = require('fs');
@@ -31,6 +29,7 @@ const state = require('./lib/state.cjs');
 const phase = require('./lib/phase.cjs');
 const commands = require('./lib/commands.cjs');
 const preflight = require('./lib/preflight.cjs');
+const init = require('./lib/init.cjs');
 
 // -- CLI Argument Parsing -----------------------------------------------------
 
@@ -78,7 +77,7 @@ function showHelp(raw) {
     'preflight': 'Pre-flight dependency checks (skills, MCP, CLIs, GSD reference)',
     'setup-reference': 'Copy GSD reference to .reference/ with version pinning',
     'setup-gitignore': 'Add pattern to .gitignore (e.g., .reference/)',
-    'init': '(planned) Compound init commands',
+    'init': 'Compound init commands: init pipeline, init phase <N>',
     'help': 'Show this help message',
   };
   output({ commands }, raw);
@@ -231,10 +230,15 @@ function main() {
       break;
     }
 
-    // -- Planned commands (not yet implemented) --------------------------------
-
     case 'init': {
-      error('Command "init" not yet implemented', 'NOT_IMPLEMENTED');
+      const subCmd = args[1];
+      if (!subCmd || subCmd === 'pipeline') {
+        init.cmdInitPipeline(cwd, raw);
+      } else if (subCmd === 'phase') {
+        init.cmdInitPhase(cwd, args[2], raw);
+      } else {
+        error('Unknown init subcommand: ' + subCmd + '. Available: pipeline, phase <N>', 'UNKNOWN_SUBCOMMAND');
+      }
       break;
     }
 
