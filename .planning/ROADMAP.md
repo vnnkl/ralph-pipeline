@@ -17,6 +17,9 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Phase Content** - Research, PRD, Deepen, and Resolution subagent prompts
 - [x] **Phase 4: Execution Layer** - Conversion, headless execution, bead results, compound review
 - [ ] **Phase 5: Advanced Features** - YOLO mode, auto-advance chain, time budget, configurable depth
+- [ ] **Phase 6: Time Budget Init Integration** - Fix init pipeline time_budget_expires + SKILL.md field name alignment
+- [ ] **Phase 7: Preflight Cache + Skip-on-Resume** - Write preflight cache, populate preflight_passed in init
+- [ ] **Phase 8: Tech Debt Cleanup** - Replace stub templates, remove dead exports
 
 ## Phase Details
 
@@ -98,10 +101,43 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] 05-02-PLAN.md -- YOLO mode: --yolo flag detection in SKILL.md, gate bypass in all 9 templates
 - [ ] 05-03-PLAN.md -- Auto-advance: SessionStart hook, time budget phase boundary check, /clear chain logic
 
+### Phase 6: Time Budget Init Integration
+**Goal:** Fix init pipeline to return `time_budget_expires` and align SKILL.md Step 1b variable names with actual output keys — eliminates accidental correctness and undefined behavior
+**Depends on**: Phase 5
+**Requirements**: TIME-01, TIME-04
+**Gap Closure:** Closes INT-01, FLOW-01 from v1.0 audit
+**Success Criteria** (what must be TRUE):
+  1. `cmdInitPipeline` returns `time_budget_expires` field populated from config.json
+  2. SKILL.md Step 1b references exact field names matching time-budget estimate output (`estimated_beads_remaining`, `avg_bead_duration_display`)
+  3. Test verifies init pipeline output includes `time_budget_expires` when time budget is set
+**Plans**: 0 plans (to be planned)
+
+### Phase 7: Preflight Cache + Skip-on-Resume
+**Goal:** Preflight writes a cache file on success so init pipeline can report `preflight_passed` and skip re-running preflight on resume
+**Depends on**: Phase 1
+**Requirements**: ORCH-02
+**Gap Closure:** Closes INT-02, FLOW-02 from v1.0 audit
+**Success Criteria** (what must be TRUE):
+  1. `cmdPreflight` writes `.planning/.preflight-cache.json` with timestamp and results on success
+  2. `cmdInitPipeline` reads preflight cache and returns `preflight_passed: true` when cache is fresh
+  3. Test verifies preflight cache write/read cycle and stale cache detection
+**Plans**: 0 plans (to be planned)
+
+### Phase 8: Tech Debt Cleanup
+**Goal:** Replace stub templates with functional implementations and remove dead exports
+**Depends on**: Phase 7
+**Requirements**: ORCH-02, ORCH-03
+**Gap Closure:** Closes tech debt from v1.0 audit
+**Success Criteria** (what must be TRUE):
+  1. templates/preflight.md invokes `cmdPreflight` CLI and reports results instead of immediately writing completed: true
+  2. templates/clarify.md gathers project scope via AskUserQuestion instead of immediately writing completed: true
+  3. lib/preflight.cjs only exports symbols that are imported elsewhere
+**Plans**: 0 plans (to be planned)
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -110,3 +146,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 3. Phase Content | 2/2 | Complete | 2026-02-25 |
 | 4. Execution Layer | 3/3 | Complete | 2026-02-25 |
 | 5. Advanced Features | 0/3 | Not started | - |
+| 6. Time Budget Init Integration | 0/0 | Not started | - |
+| 7. Preflight Cache + Skip-on-Resume | 0/0 | Not started | - |
+| 8. Tech Debt Cleanup | 0/0 | Not started | - |
