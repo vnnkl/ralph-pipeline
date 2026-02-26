@@ -189,6 +189,8 @@ Decimal phases appear between their surrounding integers in numeric order.
   1. YOLO execute path calls `ralph-tools.cjs time-budget record-bead` after each bead completes
   2. `time-budget estimate` returns avg_bead_duration_ms based on actual recorded data, not 20-min default
   3. estimated_beads_remaining is accurate in YOLO sessions
+**Plans**: 1 plan
+- [ ] 12-01-PLAN.md -- YOLO headless default + manual-mode duration capture via timestamp diffs
 
 ### Phase 13: Quality Gate + Doc Polish
 **Goal:** Fix review re-run quality gate suffix and align documentation declarations — closes the last flow gap and remaining doc-level tech debt
@@ -218,5 +220,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 9. Integration Polish | 2/2 | Complete | 2026-02-26 |
 | 10. Cosmetic Cleanup | 1/1 | Complete | 2026-02-26 |
 | 11. Orchestrator State Sync | 1/1 | Complete    | 2026-02-26 |
-| 12. YOLO Time Budget Tracking | 0/0 | Planned | — |
+| 12. YOLO Time Budget Tracking | 0/1 | Planned | — |
 | 13. Quality Gate + Doc Polish | 0/0 | Planned | — |
