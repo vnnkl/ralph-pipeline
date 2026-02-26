@@ -147,7 +147,9 @@ Decimal phases appear between their surrounding integers in numeric order.
   1. SKILL.md Step 6 excerpt/skip path uses pipeline phase slug (e.g., `research`, `convert`) not GSD dev-phase name
   2. YOLO convert path auto-prompts or falls back to default bead_format when config value is null
   3. Flow "User gate excerpt" completes end-to-end without ambiguity
-**Plans**: 0 plans (to be planned)
+**Plans**: 2 plans
+- [ ] 09-01-PLAN.md -- Rename cascade: PIPELINE_PHASES slug+displayName, scanPipelinePhases, tests, all 9 template variables
+- [ ] 09-02-PLAN.md -- SKILL.md variable table + excerpt/skip fix + YOLO bead_format prompt + convert.md fallback
 
 ### Phase 10: Cosmetic Cleanup
 **Goal:** Fix loadConfig defaults, update stale ROADMAP checkboxes, align traceability table, remove dead code — all info-severity items
