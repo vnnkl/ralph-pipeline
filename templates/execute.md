@@ -32,6 +32,11 @@ If zero beads found:
 
 Report: "Found {TOTAL_BEADS} beads ready for execution."
 
+Record the execution start time for manual-mode duration tracking:
+```bash
+EXEC_START_TIME=$(date +%s%3N)
+```
+
 ### Step 2: Present Execution Gate
 
 Read the pipeline mode:
@@ -40,9 +45,9 @@ node ralph-tools.cjs config-get mode --raw
 ```
 
 If mode is "yolo":
-- Default to manual mode (locked decision from CONTEXT.md: user wants to be present for execution)
-- Log: "YOLO mode: defaulting to manual execution (ralph-tui)"
-- Skip AskUserQuestion, proceed to Step 3a (Manual Mode)
+- Default to headless mode
+- Log: "YOLO mode: defaulting to headless execution"
+- Skip AskUserQuestion, proceed to Step 3b (Headless Mode)
 
 If mode is NOT "yolo":
 
