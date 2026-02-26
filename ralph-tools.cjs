@@ -31,6 +31,7 @@ const commands = require('./lib/commands.cjs');
 const preflight = require('./lib/preflight.cjs');
 const init = require('./lib/init.cjs');
 const orchestrator = require('./lib/orchestrator.cjs');
+const timeBudget = require('./lib/time-budget.cjs');
 
 // -- CLI Argument Parsing -----------------------------------------------------
 
@@ -81,6 +82,7 @@ function showHelp(raw) {
     'init': 'Compound init commands: init pipeline, init phase <N>',
     'scan-phases': 'Scan pipeline phases: completion status of all 9 phases',
     'excerpt': 'Extract first N non-frontmatter lines from a file',
+    'time-budget': 'Time budget management: start <hours>, check, record-bead <ms>, estimate',
     'help': 'Show this help message',
   };
   output({ commands }, raw);
@@ -269,6 +271,28 @@ function main() {
       const pattern = args[1];
       if (!pattern) error('Usage: setup-gitignore <pattern>', 'INVALID_ARGS');
       setupGitignore(cwd, pattern, raw);
+      break;
+    }
+
+    case 'time-budget': {
+      const sub = args[1];
+      if (!sub) error('Usage: time-budget <start|check|record-bead|estimate> [args]', 'INVALID_ARGS');
+      switch (sub) {
+        case 'start':
+          timeBudget.cmdTimeBudgetStart(cwd, args[2]);
+          break;
+        case 'check':
+          timeBudget.cmdTimeBudgetCheck(cwd);
+          break;
+        case 'record-bead':
+          timeBudget.cmdTimeBudgetRecordBead(cwd, args[2]);
+          break;
+        case 'estimate':
+          timeBudget.cmdTimeBudgetEstimate(cwd);
+          break;
+        default:
+          error('Unknown time-budget subcommand: ' + sub, 'UNKNOWN_SUBCOMMAND');
+      }
       break;
     }
 
