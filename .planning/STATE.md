@@ -2,13 +2,13 @@
 ralph_state_version: 1.0
 current_phase: 5
 total_phases: 5
-current_plan: 1
+current_plan: 2
 status: Executing Phase 5
-last_updated: "2026-02-26T08:55:17Z"
-last_activity: 2026-02-26 -- Completed 05-01 (time budget CLI commands)
-progress_percent: 87
+last_updated: "2026-02-26T08:56:10Z"
+last_activity: 2026-02-26 -- Completed 05-02 (YOLO mode gate bypass)
+progress_percent: 93
 total_plans: 16
-completed_plans: 14
+completed_plans: 15
 ---
 
 # Project State
@@ -23,18 +23,18 @@ See: .planning/PROJECT.md (updated 2026-02-25)
 ## Current Position
 
 Phase: 5 of 5 (Advanced Features)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: Executing Phase 5
-Last activity: 2026-02-26 -- Completed 05-01 (time budget CLI commands)
+Last activity: 2026-02-26 -- Completed 05-02 (YOLO mode gate bypass)
 
-Progress: [████████░░] 87%
+Progress: [█████████░] 93%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 14
+- Total plans completed: 15
 - Average duration: 3min
-- Total execution time: 0.67 hours
+- Total execution time: 0.70 hours
 
 **By Phase:**
 
@@ -44,10 +44,10 @@ Progress: [████████░░] 87%
 | 2 - Orchestrator Shell | 2/2 | 6min | 3min |
 | 3 - Phase Content | 2/2 | 7min | 3.5min |
 | 4 - Execution Layer | 4/4 | 11min | 2.75min |
-| 5 - Advanced Features | 1/3 | 1min | 1min |
+| 5 - Advanced Features | 2/3 | 3min | 1.5min |
 
 **Recent Trend:**
-- Last 5 plans: 04-02 (3min), 04-03 (4min), 04-04 (1min), 05-01 (1min)
+- Last 5 plans: 04-03 (4min), 04-04 (1min), 05-01 (1min), 05-02 (2min)
 - Trend: stable to improving
 
 *Updated after each plan completion*
@@ -104,6 +104,12 @@ Recent decisions affecting current work:
 - Absolute timestamp for budget expiry -- survives /clear without recalculation (05-01)
 - 20-minute default bead duration for first-run estimates (05-01)
 - Weighted running average for bead duration tracking (05-01)
+- Two-tier YOLO bypass: orchestrator (Step 6) for standard gates, template-internal for custom gates (05-02)
+- Execute YOLO defaults to manual mode per locked decision (05-02)
+- Execute YOLO skips failed beads and continues instead of stopping batch (05-02)
+- Resolve YOLO auto-answers with [YOLO-RESOLVED] prefix tag for traceability (05-02)
+- Convert YOLO requires bead_format pre-set in config, fails if missing (05-02)
+- Review YOLO auto-selects skip, accepting all findings (05-02)
 
 ### Pending Todos
 
@@ -116,5 +122,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-26
-Stopped at: Completed 05-01-PLAN.md (time budget CLI commands)
-Resume file: .planning/phases/05-advanced-features/05-01-SUMMARY.md
+Stopped at: Completed 05-02-PLAN.md (YOLO mode gate bypass)
+Resume file: .planning/phases/05-advanced-features/05-02-SUMMARY.md
