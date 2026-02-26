@@ -74,10 +74,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Time Budget
 
-- [ ] **TIME-01**: User can specify time budget in hours at pipeline start
+- [x] **TIME-01**: User can specify time budget in hours at pipeline start
 - [ ] **TIME-02**: Pipeline auto-advances through phases until budget expires
 - [ ] **TIME-03**: Current phase always finishes before stopping (clean phase boundaries)
-- [ ] **TIME-04**: Time remaining persisted to config.json (survives /clear between phases)
+- [x] **TIME-04**: Time remaining persisted to config.json (survives /clear between phases)
 
 ## v2 Requirements
 
@@ -149,10 +149,10 @@ Requirements for initial release. Each maps to roadmap phases.
 | REVW-01 | Phase 4 | Complete |
 | REVW-02 | Phase 4 | Complete |
 | REVW-03 | Phase 4 | Complete |
-| TIME-01 | Phase 5 | Pending |
+| TIME-01 | Phase 5 | Complete |
 | TIME-02 | Phase 5 | Pending |
 | TIME-03 | Phase 5 | Pending |
-| TIME-04 | Phase 5 | Pending |
+| TIME-04 | Phase 5 | Complete |
 
 **Coverage:**
 - v1 requirements: 42 total

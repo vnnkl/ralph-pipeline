@@ -1,14 +1,14 @@
 ---
 ralph_state_version: 1.0
-current_phase: 4
+current_phase: 5
 total_phases: 5
-current_plan: 4
-status: Phase 5 context gathered
-last_updated: "2026-02-26T08:12:37.749Z"
-last_activity: 2026-02-25 -- Completed 04-04 (quality gate instructions in execute and convert templates)
-progress_percent: 100
-total_plans: 13
-completed_plans: 13
+current_plan: 1
+status: Executing Phase 5
+last_updated: "2026-02-26T08:55:17Z"
+last_activity: 2026-02-26 -- Completed 05-01 (time budget CLI commands)
+progress_percent: 87
+total_plans: 16
+completed_plans: 14
 ---
 
 # Project State
@@ -18,23 +18,23 @@ completed_plans: 13
 See: .planning/PROJECT.md (updated 2026-02-25)
 
 **Core value:** Context isolation through /clear between phases combined with ralph-tui's ability to execute large batches of work unattended
-**Current focus:** Phase 4 -- Execution Layer (ALL PLANS COMPLETE including gap closure)
+**Current focus:** Phase 5 -- Advanced Features (time budgets, YOLO mode, auto-advance)
 
 ## Current Position
 
-Phase: 4 of 5 (Execution Layer) -- ALL PLANS COMPLETE
-Plan: 4 of 4 in current phase
-Status: Phase 5 context gathered
-Last activity: 2026-02-25 -- Completed 04-04 (quality gate instructions in execute and convert templates)
+Phase: 5 of 5 (Advanced Features)
+Plan: 1 of 3 in current phase
+Status: Executing Phase 5
+Last activity: 2026-02-26 -- Completed 05-01 (time budget CLI commands)
 
-Progress: [██████████] 100%
+Progress: [████████░░] 87%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 12
+- Total plans completed: 14
 - Average duration: 3min
-- Total execution time: 0.64 hours
+- Total execution time: 0.67 hours
 
 **By Phase:**
 
@@ -44,9 +44,10 @@ Progress: [██████████] 100%
 | 2 - Orchestrator Shell | 2/2 | 6min | 3min |
 | 3 - Phase Content | 2/2 | 7min | 3.5min |
 | 4 - Execution Layer | 4/4 | 11min | 2.75min |
+| 5 - Advanced Features | 1/3 | 1min | 1min |
 
 **Recent Trend:**
-- Last 5 plans: 03-02 (4min), 04-01 (3min), 04-02 (3min), 04-03 (4min), 04-04 (1min)
+- Last 5 plans: 04-02 (3min), 04-03 (4min), 04-04 (1min), 05-01 (1min)
 - Trend: stable to improving
 
 *Updated after each plan completion*
@@ -100,6 +101,9 @@ Recent decisions affecting current work:
 - Review PHASE_FILES stays empty (reads git diff and bead-results directly) (04-03)
 - Quality gates enforced by delegation: QUALITY_GATE_SUFFIX appended to bead prompt, not external check (04-04)
 - Step 6.5 in convert.md injects quality gate acceptance criteria into all beads, idempotent (04-04)
+- Absolute timestamp for budget expiry -- survives /clear without recalculation (05-01)
+- 20-minute default bead duration for first-run estimates (05-01)
+- Weighted running average for bead duration tracking (05-01)
 
 ### Pending Todos
 
@@ -111,6 +115,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-02-25
-Stopped at: Completed 04-04-PLAN.md (quality gate instructions in execute and convert templates)
-Resume file: .planning/phases/04-execution-layer/04-04-SUMMARY.md
+Last session: 2026-02-26
+Stopped at: Completed 05-01-PLAN.md (time budget CLI commands)
+Resume file: .planning/phases/05-advanced-features/05-01-SUMMARY.md
