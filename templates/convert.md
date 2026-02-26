@@ -1,5 +1,5 @@
 <objective>
-Execute {{PHASE_NAME}} phase ({{PHASE_ID}} of 9) for the current pipeline project.
+Execute {{PIPELINE_DISPLAY_NAME}} phase ({{PHASE_ID}} of 9) for the current pipeline project.
 
 Convert the PRD into beads by presenting a bead format choice (bd Go / br Rust / prd.json), invoking the appropriate chained skill, validating bead output, detecting frontend stories for /frontend-design injection, and writing the completion file.
 </objective>
@@ -251,7 +251,7 @@ Return:
 </instructions>
 
 <success_criteria>
-- Output file exists at .planning/pipeline/{{PHASE_SLUG}}.md with `completed: true` in frontmatter
+- Output file exists at .planning/pipeline/{{PIPELINE_PHASE}}.md with `completed: true` in frontmatter
 - User was presented with bead format choice (bd / br / prd.json) via AskUserQuestion
 - The correct chained skill was invoked based on user choice
 - .beads/*.md files exist and each has valid frontmatter and acceptance criteria

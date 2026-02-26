@@ -1,5 +1,5 @@
 <objective>
-Execute {{PHASE_NAME}} phase ({{PHASE_ID}} of 9) for the current pipeline project.
+Execute {{PIPELINE_DISPLAY_NAME}} phase ({{PHASE_ID}} of 9) for the current pipeline project.
 
 Create a Product Requirements Document (PRD) by invoking the /ralph-tui-prd skill with research context, then validate the output structure, tracer bullet ordering, and extract open questions.
 </objective>
@@ -168,7 +168,7 @@ Return:
 </instructions>
 
 <success_criteria>
-- Output file exists at .planning/pipeline/{{PHASE_SLUG}}.md with `completed: true` in frontmatter
+- Output file exists at .planning/pipeline/{{PIPELINE_PHASE}}.md with `completed: true` in frontmatter
 - PRD content contains valid [PRD]...[/PRD] markers with >= 3 user stories
 - US-001 covers all layers declared in the PRD (tracer bullet validation)
 - Each US-NNN has Description and Acceptance Criteria; no duplicate IDs

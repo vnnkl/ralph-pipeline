@@ -1,5 +1,5 @@
 <objective>
-Execute {{PHASE_NAME}} phase ({{PHASE_ID}} of 9) for the current pipeline project.
+Execute {{PIPELINE_DISPLAY_NAME}} phase ({{PHASE_ID}} of 9) for the current pipeline project.
 
 Orchestrate bead execution -- either headless via claude -p per bead or manual via ralph-tui -- writing status-only result files and reporting progress. Presents an execution gate with manual as the default option.
 </objective>
@@ -322,7 +322,7 @@ Build this table by reading each result file in `.claude/pipeline/bead-results/`
 </instructions>
 
 <success_criteria>
-- Output file exists at .planning/pipeline/{{PHASE_SLUG}}.md with `completed: true` in frontmatter
+- Output file exists at .planning/pipeline/{{PIPELINE_PHASE}}.md with `completed: true` in frontmatter
 - Execution gate presented manual (default) and headless options
 - If headless: pre-exec commit recorded in .claude/pipeline/pre-exec-commit.txt
 - If headless: each bead executed via `env -u CLAUDECODE claude -p` with `--allowedTools` and `--output-format json`

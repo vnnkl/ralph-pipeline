@@ -1,5 +1,5 @@
 <objective>
-Execute {{PHASE_NAME}} phase ({{PHASE_ID}} of 9) for the current pipeline project.
+Execute {{PIPELINE_DISPLAY_NAME}} phase ({{PHASE_ID}} of 9) for the current pipeline project.
 
 Run parallel review agents against the PRD from multiple expert perspectives (security, architecture, simplicity, performance), present findings with severity categorization, and offer a refine/re-run/proceed gate.
 </objective>
@@ -433,7 +433,7 @@ Return:
 </instructions>
 
 <success_criteria>
-- Output file exists at .planning/pipeline/{{PHASE_SLUG}}.md with `completed: true` in frontmatter
+- Output file exists at .planning/pipeline/{{PIPELINE_PHASE}}.md with `completed: true` in frontmatter
 - Review findings from all 4 agents are present in output (or warnings logged for missing agents)
 - Gate was presented with refine/re-run/proceed options
 - If refine was chosen, revised PRD exists at .planning/pipeline/prd.md

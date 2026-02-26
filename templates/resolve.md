@@ -1,5 +1,5 @@
 <objective>
-Execute {{PHASE_NAME}} phase ({{PHASE_ID}} of 9) for the current pipeline project.
+Execute {{PIPELINE_DISPLAY_NAME}} phase ({{PHASE_ID}} of 9) for the current pipeline project.
 
 Scan the PRD and open-questions file for all unresolved items ([TBD], [TODO], [PLACEHOLDER] markers and unchecked open questions), resolve each one-by-one via AskUserQuestion with concrete options, write answers inline immediately, and validate zero markers remain.
 </objective>
@@ -228,7 +228,7 @@ Return:
 </instructions>
 
 <success_criteria>
-- Output file exists at .planning/pipeline/{{PHASE_SLUG}}.md with `completed: true` in frontmatter
+- Output file exists at .planning/pipeline/{{PIPELINE_PHASE}}.md with `completed: true` in frontmatter
 - .planning/pipeline/prd.md contains zero [TBD], [TODO], or [PLACEHOLDER] patterns
 - .planning/pipeline/open-questions.md has `resolved: true` in frontmatter
 - All open-questions items are marked `[x]` (checked)

@@ -1,5 +1,5 @@
 <objective>
-Execute {{PHASE_NAME}} phase ({{PHASE_ID}} of 9) for the current pipeline project.
+Execute {{PIPELINE_DISPLAY_NAME}} phase ({{PHASE_ID}} of 9) for the current pipeline project.
 
 Spawn parallel research agents to analyze the project from multiple angles, synthesize their findings, and produce a research summary that feeds PRD creation.
 </objective>
@@ -265,7 +265,7 @@ Return:
 </instructions>
 
 <success_criteria>
-- Output file exists at .planning/pipeline/{{PHASE_SLUG}}.md
+- Output file exists at .planning/pipeline/{{PIPELINE_PHASE}}.md
 - Output file has `completed: true` in frontmatter
 - .planning/research/SUMMARY.md exists and contains synthesized findings
 - At least 3 individual research files exist in .planning/research/ (repo-research.md, best-practices.md, framework-docs.md)

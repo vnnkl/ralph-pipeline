@@ -1,5 +1,5 @@
 <objective>
-Execute {{PHASE_NAME}} phase ({{PHASE_ID}} of 9) for the current pipeline project.
+Execute {{PIPELINE_DISPLAY_NAME}} phase ({{PHASE_ID}} of 9) for the current pipeline project.
 
 Run parallel review agents against actual bead-produced code changes (git diff), categorize findings as P1/P2/P3, and present a multi-option review gate including PR creation.
 </objective>
@@ -456,7 +456,7 @@ Build the PR body from the review findings and bead results:
 
 ```bash
 gh pr create --draft \
-  --title "feat: {{PHASE_SLUG}} pipeline output" \
+  --title "feat: {{PIPELINE_PHASE}} pipeline output" \
   --body "## Pipeline Review Summary
 
 ### Bead Execution
@@ -555,7 +555,7 @@ Return:
 </instructions>
 
 <success_criteria>
-- Output file exists at .planning/pipeline/{{PHASE_SLUG}}.md with `completed: true` in frontmatter
+- Output file exists at .planning/pipeline/{{PIPELINE_PHASE}}.md with `completed: true` in frontmatter
 - Review diff scoped to bead-produced changes via pre_exec_commit...HEAD
 - All 4 review agents spawned in parallel (security, architecture, simplicity, performance)
 - Each agent reviews actual code diff, not the PRD

@@ -1,5 +1,5 @@
 <objective>
-Execute {{PHASE_NAME}} phase ({{PHASE_ID}} of 9) for the current pipeline project.
+Execute {{PIPELINE_DISPLAY_NAME}} phase ({{PHASE_ID}} of 9) for the current pipeline project.
 
 Gather project scope, stack choices, quality gates, and target platform via interactive questions. Write structured output for downstream research and PRD phases.
 </objective>
@@ -201,7 +201,7 @@ Return:
 </instructions>
 
 <success_criteria>
-- Output file exists at .planning/pipeline/{{PHASE_SLUG}}.md with completed: true
+- Output file exists at .planning/pipeline/{{PIPELINE_PHASE}}.md with completed: true
 - Output contains project name, stack, platform, and quality gates
 - If PROJECT.md existed, pre-populated values were offered for confirmation
 - Each question presented via AskUserQuestion with concrete options

@@ -1,5 +1,5 @@
 <objective>
-Execute {{PHASE_NAME}} phase ({{PHASE_ID}} of 9) for the current pipeline project.
+Execute {{PIPELINE_DISPLAY_NAME}} phase ({{PHASE_ID}} of 9) for the current pipeline project.
 
 Run pre-flight environment checks, display results, handle setup actions interactively, and block pipeline if required dependencies are missing.
 </objective>
@@ -168,7 +168,7 @@ Return:
 </instructions>
 
 <success_criteria>
-- Output file exists at .planning/pipeline/{{PHASE_SLUG}}.md
+- Output file exists at .planning/pipeline/{{PIPELINE_PHASE}}.md
 - Output file has `completed: true` in frontmatter
 - CLI was invoked via `node ralph-tools.cjs preflight --raw`
 - Results displayed as checklist summary
