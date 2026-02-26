@@ -110,6 +110,21 @@ Parse the JSON array output. Find the first phase where `completed` is false. Co
 All 9 phases finished. Pipeline output is in .planning/pipeline/.
 ```
 
+### Step 2b: YOLO Bead Format Check
+
+If mode is "yolo":
+  Read bead_format: `node ralph-tools.cjs config-get bead_format --raw`
+  If bead_format is null or empty:
+    Ask via AskUserQuestion:
+      - **Header:** "Bead Format (YOLO Setup)"
+      - **Question:** "YOLO mode needs a bead format for the convert phase. Choose once for this project:"
+      - **Options:**
+        1. **bd** -- Go beads via /ralph-tui-create-beads
+        2. **br** -- Rust beads via /ralph-tui-create-beads-rust
+        3. **prd.json** -- JSON format via /ralph-tui-create-json
+    Run: `node ralph-tools.cjs config-set bead_format {choice}`
+    Log: "Bead format set to '{choice}' for this project."
+
 ### Step 3: Status Banner
 
 Display the pipeline progress before dispatching:
@@ -117,7 +132,7 @@ Display the pipeline progress before dispatching:
 ```
 ## Pipeline Status
 
-**Phase:** {id} of 9 ({name})
+**Phase:** {id} of 9 ({pipeline_display_name})
 **Status:** Ready to dispatch
 **Progress:** [{progress_bar}] {percent}%
 
@@ -134,7 +149,7 @@ Phase 9: Review -- {done|pending|skipped}
 
 The progress bar uses `#` for completed phases and `-` for remaining. Example: `[####-----]` for 4/9 complete = 44%.
 
-Auto-skip completed phases silently. For each already-completed phase before the current one, log a single line: `Phase {id} ({name}): already complete, skipping.`
+Auto-skip completed phases silently. For each already-completed phase before the current one, log a single line: `Phase {id} ({pipeline_display_name}): already complete, skipping.`
 
 Then auto-dispatch the next incomplete phase (Step 4).
 
@@ -146,13 +161,13 @@ Read the template file for the current phase:
 templates/{phase.template}
 ```
 
-Fill template variables using the `fillTemplate` function from `lib/orchestrator.cjs`:
+Fill template variables using the `fillTemplate` function from `lib/orchestrator.cjs`. `PIPELINE_DISPLAY_NAME` comes from `phase.displayName` and `PIPELINE_PHASE` comes from `phase.slug` in the PIPELINE_PHASES array:
 
 | Variable | Value |
 |----------|-------|
 | `{{CWD}}` | Current working directory |
-| `{{PHASE_NAME}}` | Capitalized phase name (e.g., "Research") |
-| `{{PHASE_SLUG}}` | URL-safe phase name (e.g., "research") |
+| `{{PIPELINE_DISPLAY_NAME}}` | Pipeline phase display name from PIPELINE_PHASES (e.g., "Research", "PRD", "Pre-flight") |
+| `{{PIPELINE_PHASE}}` | Pipeline phase slug from PIPELINE_PHASES (e.g., "research", "prd", "preflight") |
 | `{{PHASE_ID}}` | Phase number (1-9) |
 | `{{STATE_PATH}}` | `.planning/STATE.md` |
 | `{{CONFIG_PATH}}` | `.planning/config.json` |
@@ -199,7 +214,7 @@ If mode is "yolo":
 
 1. Skip AskUserQuestion entirely. Auto-approve the phase.
 2. Run: `node ralph-tools.cjs state set Status "Phase {id} complete"`
-3. Log: "YOLO mode: auto-approved phase {id} ({name})"
+3. Log: "YOLO mode: auto-approved phase {id} ({pipeline_display_name})"
 4. Proceed directly to Step 7
 
 If mode is NOT "yolo":
@@ -211,13 +226,16 @@ Gates are context-dependent -- options come from the phase's `gateOptions` array
 First, get a summary excerpt of the phase output:
 
 ```bash
-node ralph-tools.cjs excerpt .planning/pipeline/{phase_name}.md 10
+node ralph-tools.cjs excerpt .planning/pipeline/{pipeline_phase}.md 20
 ```
+
+If the excerpt command fails (file not found) or returns an empty excerpt:
+  Set excerpt to: "No output available for this phase."
 
 Then present the gate with the excerpt and context-dependent options:
 
 ```
-## Phase {id}: {Name} Complete
+## Phase {id}: {pipeline_display_name} Complete
 
 {excerpt from phase output}
 
@@ -228,7 +246,7 @@ Show only the options defined in the phase's `gateOptions`:
 
 - **approve** -- Accept output. Run: `node ralph-tools.cjs state set Status "Phase {id} complete"`. Then proceed to Step 7.
 - **redirect** -- Spawn a **fresh** Task subagent with the original template content + the path to the existing output file + user feedback. Never resume a previous agent.
-- **skip** -- Mark phase as completed (write `.planning/pipeline/{phase_name}.md` with `completed: true` frontmatter), then proceed to Step 7.
+- **skip** -- Mark phase as completed (write `.planning/pipeline/{pipeline_phase}.md` with frontmatter only: `completed: true`), then proceed to Step 7.
 - **replan** -- Clear auto_advance: `node ralph-tools.cjs config-set auto_advance false`. Return to planning mode. Show: "Returning to planning. Re-invoke the pipeline when ready to resume."
 - **retry** -- Re-dispatch the same phase as a fresh Task subagent.
 - **abort** -- Clear auto_advance: `node ralph-tools.cjs config-set auto_advance false`. Stop the pipeline, preserve all state on disk. Show: "Pipeline paused at phase {id}. Re-invoke to resume."
@@ -249,12 +267,12 @@ If mode is "yolo" OR auto_advance is true:
 1. Check retry count:
    - If phase_retry_count is null or 0: this is the first failure
      - Set phase_retry_count to 1: `node ralph-tools.cjs config-set phase_retry_count 1`
-     - Log: "Phase {id} ({name}) failed. Auto-retrying once (attempt 2/2)..."
+     - Log: "Phase {id} ({pipeline_display_name}) failed. Auto-retrying once (attempt 2/2)..."
      - Re-dispatch the same phase (go back to Step 3 for the same phase_id)
    - If phase_retry_count >= 1: this is the second failure (retry exhausted)
      - Set auto_advance to false: `node ralph-tools.cjs config-set auto_advance false`
      - Reset phase_retry_count to 0: `node ralph-tools.cjs config-set phase_retry_count 0`
-     - Log: "Phase {id} ({name}) failed after retry. Pipeline stopped. State preserved for manual resume."
+     - Log: "Phase {id} ({pipeline_display_name}) failed after retry. Pipeline stopped. State preserved for manual resume."
      - Stop the pipeline. Do NOT proceed to Step 7.
      - Show: "Pipeline paused (phase failed after retry). Re-invoke to resume from phase {id}."
 
@@ -286,7 +304,7 @@ Parse JSON output: `{ has_budget, expired, remaining_ms, remaining_display }`
 
 If expired:
 - Set auto_advance to false: `node ralph-tools.cjs config-set auto_advance false`
-- Log: "Time budget expired. Pipeline paused after phase {id} ({name})."
+- Log: "Time budget expired. Pipeline paused after phase {id} ({pipeline_display_name})."
 - Stop -- do not dispatch next phase. Show:
   "Pipeline paused (time budget expired). Re-invoke to resume."
 
@@ -304,12 +322,12 @@ Check the workflow mode (auto_advance from Step 1 init output):
 
 **Manual mode** (auto_advance is false, default): Suggest a context boundary:
 ```
-Phase {id} ({name}) is complete. Run /clear for fresh context, then re-invoke the pipeline to continue with Phase {next_id} ({next_name}).
+Phase {id} ({pipeline_display_name}) is complete. Run /clear for fresh context, then re-invoke the pipeline to continue with Phase {next_id} ({next_pipeline_display_name}).
 ```
 
 **Auto mode** (auto_advance is true):
 1. Set auto_advance to true in config (ensure it persists): `node ralph-tools.cjs config-set auto_advance true`
-2. Log: "Auto-advance: proceeding to phase {next_id} ({next_name})"
+2. Log: "Auto-advance: proceeding to phase {next_id} ({next_pipeline_display_name})"
 3. Suggest /clear: "Run /clear now. The auto-advance hook will re-invoke the pipeline automatically."
    Note: In auto mode, the user should not need to do anything after /clear. The SessionStart hook handles re-invocation.
 
