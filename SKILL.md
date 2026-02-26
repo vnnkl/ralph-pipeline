@@ -66,7 +66,7 @@ If `time_budget_expires` is null (no budget set yet) AND mode is NOT "yolo":
    - Run: `node ralph-tools.cjs time-budget start {hours}`
    - Run: `node ralph-tools.cjs time-budget estimate`
    - Parse the estimate output
-   - Log: "Budget: {hours}h. Estimated ~{estimated_beads} beads based on avg {avg_display}/bead."
+   - Log: "Budget: {hours}h. Estimated ~{estimated_beads_remaining} beads based on avg {avg_bead_duration_display}/bead."
    - If is_first_run: Log: "(First run -- using 20min/bead default estimate)"
 
 3. If user selects "No limit": Skip time budget. Log: "No time budget set."
