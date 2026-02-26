@@ -48,6 +48,33 @@ Parse the JSON output. Extract these fields:
 - `mode` -- workflow mode (e.g., "yolo")
 - `preflight_passed` -- whether preflight checks passed
 
+### Step 1b: Time Budget Prompt (first run only)
+
+If `time_budget_expires` is null (no budget set yet) AND mode is NOT "yolo":
+
+1. Ask via AskUserQuestion:
+   - **Header:** "Time Budget"
+   - **Question:** "How many hours should the pipeline run before auto-pausing? Leave blank for no limit."
+   - **Options:**
+     1. **2 hours** -- Short session
+     2. **4 hours** -- Standard session
+     3. **8 hours** -- Extended session
+     4. **No limit** -- Run until completion
+     5. **Custom** -- I will specify
+
+2. If user selects a number (or custom):
+   - Run: `node ralph-tools.cjs time-budget start {hours}`
+   - Run: `node ralph-tools.cjs time-budget estimate`
+   - Parse the estimate output
+   - Log: "Budget: {hours}h. Estimated ~{estimated_beads} beads based on avg {avg_display}/bead."
+   - If is_first_run: Log: "(First run -- using 20min/bead default estimate)"
+
+3. If user selects "No limit": Skip time budget. Log: "No time budget set."
+
+If mode is "yolo":
+- Skip the prompt. If `time_budget_hours` is set in config, it was configured before YOLO was enabled. Log the budget status.
+- If no budget: Log: "YOLO mode: no time budget set. Pipeline will run to completion."
+
 ### Step 2: Position Detection and --skip-to
 
 Check if the user invoked the skill with `--skip-to <phase>`. If so, jump directly to that phase number (skip all prior phases regardless of completion status).
@@ -71,7 +98,11 @@ Parse the JSON array output. Find the first phase where `completed` is false. Co
 
 - **If they match:** Continue normally.
 - **If mismatch:** Log a one-line warning: `Position mismatch: STATE.md says phase {X}, file scan says phase {Y}. Using file scan.` Use the file scan position (files are more recent truth).
-- **If all phases complete:** Show the completion banner and stop:
+- **If all phases complete:** Clear auto_advance and show the completion banner:
+  ```bash
+  node ralph-tools.cjs config-set auto_advance false
+  ```
+  Then stop:
 
 ```
 ## Pipeline Complete
@@ -198,9 +229,39 @@ Show only the options defined in the phase's `gateOptions`:
 - **approve** -- Accept output. Run: `node ralph-tools.cjs state set Status "Phase {id} complete"`. Then proceed to Step 7.
 - **redirect** -- Spawn a **fresh** Task subagent with the original template content + the path to the existing output file + user feedback. Never resume a previous agent.
 - **skip** -- Mark phase as completed (write `.planning/pipeline/{phase_name}.md` with `completed: true` frontmatter), then proceed to Step 7.
-- **replan** -- Return to planning mode. Show: "Returning to planning. Re-invoke the pipeline when ready to resume."
+- **replan** -- Clear auto_advance: `node ralph-tools.cjs config-set auto_advance false`. Return to planning mode. Show: "Returning to planning. Re-invoke the pipeline when ready to resume."
 - **retry** -- Re-dispatch the same phase as a fresh Task subagent.
-- **abort** -- Stop the pipeline, preserve all state on disk. Show: "Pipeline paused at phase {id}. Re-invoke to resume."
+- **abort** -- Clear auto_advance: `node ralph-tools.cjs config-set auto_advance false`. Stop the pipeline, preserve all state on disk. Show: "Pipeline paused at phase {id}. Re-invoke to resume."
+
+**Phase Failure Auto-Retry (YOLO or auto mode):**
+
+When a phase subagent returns a failure (completion file has `completed: false`):
+
+Read mode and auto_advance from config:
+```bash
+MODE=$(node ralph-tools.cjs config-get mode --raw)
+AUTO=$(node ralph-tools.cjs config-get auto_advance --raw)
+RETRY_COUNT=$(node ralph-tools.cjs config-get phase_retry_count --raw)
+```
+
+If mode is "yolo" OR auto_advance is true:
+
+1. Check retry count:
+   - If phase_retry_count is null or 0: this is the first failure
+     - Set phase_retry_count to 1: `node ralph-tools.cjs config-set phase_retry_count 1`
+     - Log: "Phase {id} ({name}) failed. Auto-retrying once (attempt 2/2)..."
+     - Re-dispatch the same phase (go back to Step 3 for the same phase_id)
+   - If phase_retry_count >= 1: this is the second failure (retry exhausted)
+     - Set auto_advance to false: `node ralph-tools.cjs config-set auto_advance false`
+     - Reset phase_retry_count to 0: `node ralph-tools.cjs config-set phase_retry_count 0`
+     - Log: "Phase {id} ({name}) failed after retry. Pipeline stopped. State preserved for manual resume."
+     - Stop the pipeline. Do NOT proceed to Step 7.
+     - Show: "Pipeline paused (phase failed after retry). Re-invoke to resume from phase {id}."
+
+2. On phase SUCCESS: always reset phase_retry_count to 0:
+   `node ralph-tools.cjs config-set phase_retry_count 0`
+
+If mode is NOT "yolo" AND auto_advance is NOT true:
 
 **For failure (after auto-retry failed):**
 
@@ -209,17 +270,59 @@ Present failure-specific options:
 - **skip** -- Mark skipped, advance.
 - **abort** -- Stop pipeline, preserve state.
 
-### Step 7: /clear Boundary
+### Step 7: /clear Boundary (with Time Budget and Auto-Advance)
 
-After a phase is approved or skipped, check the workflow mode:
+After a phase is approved or skipped:
 
-**Manual mode** (default): Suggest a context boundary before the next phase:
+**Step 7a: Time Budget Check**
 
+If `time_budget_expires` is set in config:
+
+```bash
+node ralph-tools.cjs time-budget check
+```
+
+Parse JSON output: `{ has_budget, expired, remaining_ms, remaining_display }`
+
+If expired:
+- Set auto_advance to false: `node ralph-tools.cjs config-set auto_advance false`
+- Log: "Time budget expired. Pipeline paused after phase {id} ({name})."
+- Stop -- do not dispatch next phase. Show:
+  "Pipeline paused (time budget expired). Re-invoke to resume."
+
+If not expired:
+- Log: "Time remaining: {remaining_display}"
+- Run: `node ralph-tools.cjs time-budget estimate`
+- Log: "Estimated {estimated_beads_remaining} more beads possible."
+- Continue to Step 7b.
+
+If no time budget set: continue to Step 7b.
+
+**Step 7b: /clear Boundary**
+
+Check the workflow mode (auto_advance from Step 1 init output):
+
+**Manual mode** (auto_advance is false, default): Suggest a context boundary:
 ```
 Phase {id} ({name}) is complete. Run /clear for fresh context, then re-invoke the pipeline to continue with Phase {next_id} ({next_name}).
 ```
 
-**Auto mode** (when `config.auto_advance` is true): Dispatch the next incomplete phase directly as a Task subagent (inherently context-isolated). Loop back to Step 2 for position detection.
+**Auto mode** (auto_advance is true):
+1. Set auto_advance to true in config (ensure it persists): `node ralph-tools.cjs config-set auto_advance true`
+2. Log: "Auto-advance: proceeding to phase {next_id} ({next_name})"
+3. Suggest /clear: "Run /clear now. The auto-advance hook will re-invoke the pipeline automatically."
+   Note: In auto mode, the user should not need to do anything after /clear. The SessionStart hook handles re-invocation.
+
+**Auto-Advance Cleanup:**
+
+When the pipeline stops for ANY reason, clear auto_advance:
+- Pipeline complete (all 9 phases done): `node ralph-tools.cjs config-set auto_advance false`
+- Phase failure after auto-retry: `node ralph-tools.cjs config-set auto_advance false`
+- User selects abort at any gate: `node ralph-tools.cjs config-set auto_advance false`
+- Time budget expired (handled in Step 7a): already clears auto_advance
+- User selects replan: `node ralph-tools.cjs config-set auto_advance false`
+
+This prevents the SessionStart hook from entering an infinite restart loop.
 
 **Anti-pattern:** NEVER store pipeline position in JavaScript variables that won't survive /clear. Always re-read from disk via `ralph-tools.cjs init pipeline`.
 

@@ -145,9 +145,14 @@ For each bead:
    Executing bead {i}/{TOTAL_BEADS}: {BEAD_NAME}
    ```
 
-3. Read the bead file content.
+3. Capture bead start time (for duration recording):
+   ```bash
+   BEAD_START=$(date +%s%3N)
+   ```
 
-4. Execute the bead via Bash. CRITICAL: Must use `env -u CLAUDECODE` to avoid nested session error (Pitfall 3 from research). The quality gate suffix is appended to the bead content so the bead agent is explicitly instructed to run tests and type checks:
+4. Read the bead file content.
+
+5. Execute the bead via Bash. CRITICAL: Must use `env -u CLAUDECODE` to avoid nested session error (Pitfall 3 from research). The quality gate suffix is appended to the bead content so the bead agent is explicitly instructed to run tests and type checks:
    ```bash
    (cat "{{CWD}}/.beads/{BEAD_NAME}.md"; echo "$QUALITY_GATE_SUFFIX") | env -u CLAUDECODE claude -p \
      --allowedTools "Read,Edit,Bash,Grep,Glob,Write" \
@@ -158,9 +163,9 @@ For each bead:
 
    IMPORTANT: Do NOT use `--max-turns` (deprecated). If cost control is needed, use `--max-budget-usd`.
 
-5. Capture the exit code. Exit 0 = passed, non-zero = failed.
+6. Capture the exit code. Exit 0 = passed, non-zero = failed.
 
-6. Write the result file to `.claude/pipeline/bead-results/{BEAD_NAME}.md`:
+7. Write the result file to `.claude/pipeline/bead-results/{BEAD_NAME}.md`:
    ```bash
    cat > ".claude/pipeline/bead-results/${BEAD_NAME}.md" << 'RESULT_EOF'
    ---
@@ -171,12 +176,20 @@ For each bead:
    RESULT_EOF
    ```
 
-7. Report result:
+8. Record bead duration (headless mode only):
+   If mode is "yolo" or for any headless execution:
+   ```bash
+   BEAD_END=$(date +%s%3N)
+   BEAD_DURATION=$((BEAD_END - BEAD_START))
+   node ralph-tools.cjs time-budget record-bead $BEAD_DURATION
+   ```
+
+9. Report result:
    ```
      -> {PASSED|FAILED}
    ```
 
-8. If FAILED: STOP the batch immediately (locked decision). Report:
+10. If FAILED: STOP the batch immediately (locked decision). Report:
    ```
    Batch stopped. {PASSED}/{TOTAL_BEADS} beads passed, 1 failed.
    Failed bead: {BEAD_NAME}
