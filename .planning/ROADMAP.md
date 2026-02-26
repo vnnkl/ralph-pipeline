@@ -122,7 +122,8 @@ Decimal phases appear between their surrounding integers in numeric order.
   1. `cmdPreflight` writes `.planning/.preflight-cache.json` with timestamp and results on success
   2. `cmdInitPipeline` reads preflight cache and returns `preflight_passed: true` when cache is fresh
   3. Test verifies preflight cache write/read cycle and stale cache detection
-**Plans**: 0 plans (to be planned)
+**Plans**: 1 plan
+- [ ] 07-01-PLAN.md -- TDD: preflight cache write, init cache read (remove TTL, add version check), --force flag, gitignore, tests
 
 ### Phase 8: Tech Debt Cleanup
 **Goal:** Replace stub templates with functional implementations and remove dead exports
