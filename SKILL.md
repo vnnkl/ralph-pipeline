@@ -52,6 +52,15 @@ Parse the JSON output. Extract these fields:
 
 Check if the user invoked the skill with `--skip-to <phase>`. If so, jump directly to that phase number (skip all prior phases regardless of completion status).
 
+Check if the user invoked the skill with `--yolo`. If so:
+1. Set mode to yolo: `node ralph-tools.cjs config-set mode yolo`
+2. Log: "YOLO mode enabled: all gates will be auto-approved."
+
+Check if the user invoked the skill with `--auto`. If so:
+1. Set auto_advance to true: `node ralph-tools.cjs config-set auto_advance true`
+2. Record start time: `node ralph-tools.cjs config-set auto_advance_started_at {Date.now()}`
+3. Log: "Auto-advance enabled: pipeline will chain through phases."
+
 Otherwise, scan the disk for the actual pipeline position:
 
 ```bash
@@ -150,6 +159,19 @@ After the Task subagent returns, verify completion using both signals:
 - If retry also fails: proceed to Step 6 with the failure gate.
 
 ### Step 6: User Gate
+
+**YOLO Mode Bypass:**
+
+Read mode from config (already available from Step 1 init output).
+
+If mode is "yolo":
+
+1. Skip AskUserQuestion entirely. Auto-approve the phase.
+2. Run: `node ralph-tools.cjs state set Status "Phase {id} complete"`
+3. Log: "YOLO mode: auto-approved phase {id} ({name})"
+4. Proceed directly to Step 7
+
+If mode is NOT "yolo":
 
 Gates are context-dependent -- options come from the phase's `gateOptions` array in `PIPELINE_PHASES`.
 
