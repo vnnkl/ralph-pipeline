@@ -97,12 +97,16 @@ node ralph-tools.cjs scan-phases
 Parse the JSON array output. Find the first phase where `completed` is false. Compare with `current_phase` from Step 1.
 
 - **If they match:** Continue normally.
-- **If mismatch:** Log a one-line warning: `Position mismatch: STATE.md says phase {X}, file scan says phase {Y}. Using file scan.` Use the file scan position (files are more recent truth).
-- **If all phases complete:** Clear auto_advance and show the completion banner:
-  ```bash
-  node ralph-tools.cjs config-set auto_advance false
-  ```
-  Then stop:
+- **If mismatch:** Auto-correct STATE.md to match file scan:
+  1. Run: `node ralph-tools.cjs state set Status "Pipeline phase {file_scan_phase}/9 ({pipeline_display_name})"`
+  2. Log: "STATE.md synced to pipeline phase {file_scan_phase} ({pipeline_display_name})"
+  3. Use the file scan position for dispatch (files are more recent truth).
+- **If all phases complete:**
+  1. Clear auto_advance: `node ralph-tools.cjs config-set auto_advance false`
+  2. **ROADMAP guard:** Check if the ROADMAP checkbox for the current dev-phase is already marked. Run: `grep -c "\- \[x\].*Phase ${current_phase}[:\s]" .planning/ROADMAP.md`
+     - If result is 0 (checkbox unchecked): Run `node ralph-tools.cjs phase-complete {current_phase}` to sync ROADMAP. Log: "ROADMAP synced: dev-phase {current_phase} marked complete."
+     - If result is >= 1 (checkbox already checked): Skip phase-complete. ROADMAP is already current.
+  3. Show the completion banner and stop:
 
 ```
 ## Pipeline Complete
