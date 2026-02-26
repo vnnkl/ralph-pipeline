@@ -215,7 +215,9 @@ If mode is "yolo":
 1. Skip AskUserQuestion entirely. Auto-approve the phase.
 2. Run: `node ralph-tools.cjs state set Status "Phase {id} complete"`
 3. Log: "YOLO mode: auto-approved phase {id} ({pipeline_display_name})"
-4. Proceed directly to Step 7
+4. Reset phase_retry_count: `node ralph-tools.cjs config-set phase_retry_count 0`
+5. **If phase {id} is 9 (review):** Run `node ralph-tools.cjs phase-complete {current_phase}` and log: "Dev-phase {current_phase} marked complete."
+6. Proceed directly to Step 7
 
 If mode is NOT "yolo":
 
@@ -287,6 +289,20 @@ Present failure-specific options:
 - **retry** -- Re-dispatch same phase.
 - **skip** -- Mark skipped, advance.
 - **abort** -- Stop pipeline, preserve state.
+
+### Step 6b: Dev-Phase Completion (after pipeline phase 9 only)
+
+If the just-approved pipeline phase is phase 9 (review) -- meaning the full pipeline is done:
+
+1. Get the dev-phase number from `current_phase` (from Step 1 init pipeline output). This is the dev-phase number (e.g., 11), NOT the pipeline phase number (9).
+2. Run: `node ralph-tools.cjs phase-complete {current_phase}`
+3. Parse output JSON: `{ completed, next_phase, date }`
+4. Log: "Dev-phase {current_phase} marked complete. ROADMAP updated."
+5. Reset phase_retry_count: `node ralph-tools.cjs config-set phase_retry_count 0`
+
+If the just-approved phase is NOT phase 9: skip this step entirely. Dev-phase completion only happens when the full pipeline finishes.
+
+**Why only after phase 9:** ROADMAP checkbox is binary (complete/not complete). The dev-phase is only "done" when all 9 pipeline phases finish. Calling phase-complete mid-pipeline would prematurely mark the ROADMAP checkbox and advance STATE.md to the next dev-phase.
 
 ### Step 7: /clear Boundary (with Time Budget and Auto-Advance)
 
