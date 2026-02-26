@@ -22,6 +22,9 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 8: Tech Debt Cleanup** - Replace stub templates, remove dead exports
 - [x] **Phase 9: Integration Polish** - Fix {phase_name} variable ambiguity + YOLO bead_format fallback
 - [x] **Phase 10: Cosmetic Cleanup** - loadConfig defaults, ROADMAP checkboxes, traceability table, dead code (completed 2026-02-26)
+- [ ] **Phase 11: Orchestrator State Sync** - Wire cmdPhaseComplete into orchestrator, fix STATE.md staleness
+- [ ] **Phase 12: YOLO Time Budget Tracking** - Call record-bead in YOLO mode, fix estimate default
+- [ ] **Phase 13: Quality Gate + Doc Polish** - Review re-run QUALITY_GATE_SUFFIX, PHASE_FILES, SKILL.md CLI table
 
 ## Phase Details
 
@@ -167,10 +170,40 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 1 plan
 - [x] 10-01-PLAN.md -- loadConfig defaults, ROADMAP checkboxes, traceability table, dead code removal
 
+### Phase 11: Orchestrator State Sync
+**Goal:** Wire cmdPhaseComplete into the SKILL.md orchestrator completion path so STATE.md stays current and ROADMAP checkboxes auto-update during pipeline runs — eliminates mismatch warning noise on resume
+**Depends on**: Phase 10
+**Requirements**: STATE-03
+**Gap Closure:** Closes STATE-03 integration gap + Phase 2 tech debt (cmdPhaseComplete orphaned, STATE.md stale)
+**Success Criteria** (what must be TRUE):
+  1. After each phase completes, SKILL.md orchestrator calls `ralph-tools.cjs phase-complete` to advance STATE.md
+  2. STATE.md Phase field reflects the actual current phase during a pipeline run
+  3. Resume after /clear no longer fires mismatch warning for stale Phase field
+
+### Phase 12: YOLO Time Budget Tracking
+**Goal:** Call record-bead after each bead completes in YOLO execute path so time budget estimate uses actual bead duration data instead of the 20-minute default
+**Depends on**: Phase 10
+**Requirements**: TIME-03, TIME-04
+**Gap Closure:** Closes TIME-03, TIME-04 integration gaps + Phase 5 tech debt (record-bead/estimate in YOLO)
+**Success Criteria** (what must be TRUE):
+  1. YOLO execute path calls `ralph-tools.cjs time-budget record-bead` after each bead completes
+  2. `time-budget estimate` returns avg_bead_duration_ms based on actual recorded data, not 20-min default
+  3. estimated_beads_remaining is accurate in YOLO sessions
+
+### Phase 13: Quality Gate + Doc Polish
+**Goal:** Fix review re-run quality gate suffix and align documentation declarations — closes the last flow gap and remaining doc-level tech debt
+**Depends on**: Phase 10
+**Requirements**: EXEC-03, REVW-03
+**Gap Closure:** Closes review re-run flow gap + Phase 4 tech debt (QUALITY_GATE_SUFFIX) + Phase 3 tech debt (PHASE_FILES) + Phase 9 tech debt (SKILL.md CLI table)
+**Success Criteria** (what must be TRUE):
+  1. Re-running a bead from review gate appends QUALITY_GATE_SUFFIX to the bead prompt
+  2. clarify.md declared in PHASE_FILES constant in orchestrator
+  3. time-budget subcommands listed in SKILL.md CLI reference table
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10 -> 11 -> 12 -> 13
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -183,4 +216,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 7. Preflight Cache + Skip-on-Resume | 1/1 | Complete | 2026-02-26 |
 | 8. Tech Debt Cleanup | 2/2 | Complete | 2026-02-26 |
 | 9. Integration Polish | 2/2 | Complete | 2026-02-26 |
-| 10. Cosmetic Cleanup | 1/1 | Complete    | 2026-02-26 |
+| 10. Cosmetic Cleanup | 1/1 | Complete | 2026-02-26 |
+| 11. Orchestrator State Sync | 0/0 | Planned | — |
+| 12. YOLO Time Budget Tracking | 0/0 | Planned | — |
+| 13. Quality Gate + Doc Polish | 0/0 | Planned | — |
