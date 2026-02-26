@@ -77,20 +77,21 @@ test('PIPELINE_PHASES has exactly 9 entries', () => {
 
 test('PIPELINE_PHASES entries have required properties', () => {
   for (const phase of PIPELINE_PHASES) {
-    assert.ok(typeof phase.id === 'number', `Phase ${phase.name}: id should be number`);
-    assert.ok(typeof phase.name === 'string', `Phase ${phase.id}: name should be string`);
-    assert.ok(typeof phase.template === 'string', `Phase ${phase.name}: template should be string`);
-    assert.ok(Array.isArray(phase.gateOptions), `Phase ${phase.name}: gateOptions should be array`);
+    assert.ok(typeof phase.id === 'number', `Phase ${phase.slug}: id should be number`);
+    assert.ok(typeof phase.slug === 'string', `Phase ${phase.id}: slug should be string`);
+    assert.ok(typeof phase.displayName === 'string', `Phase ${phase.slug}: displayName should be string`);
+    assert.ok(typeof phase.template === 'string', `Phase ${phase.slug}: template should be string`);
+    assert.ok(Array.isArray(phase.gateOptions), `Phase ${phase.slug}: gateOptions should be array`);
   }
 });
 
-test('PIPELINE_PHASES names match expected sequence', () => {
-  const expectedNames = [
+test('PIPELINE_PHASES slugs match expected sequence', () => {
+  const expectedSlugs = [
     'preflight', 'clarify', 'research', 'prd',
     'deepen', 'resolve', 'convert', 'execute', 'review',
   ];
-  const actualNames = PIPELINE_PHASES.map(p => p.name);
-  assert.deepStrictEqual(actualNames, expectedNames);
+  const actualSlugs = PIPELINE_PHASES.map(p => p.slug);
+  assert.deepStrictEqual(actualSlugs, expectedSlugs);
 });
 
 test('PIPELINE_PHASES gate options vary per phase', () => {
@@ -119,8 +120,8 @@ test('scanPipelinePhases: no pipeline dir returns all outputExists false', () =>
   try {
     const result = scanPipelinePhases(tmpDir);
     for (const phase of result) {
-      assert.strictEqual(phase.outputExists, false, `${phase.name} outputExists should be false`);
-      assert.strictEqual(phase.completed, false, `${phase.name} completed should be false`);
+      assert.strictEqual(phase.outputExists, false, `${phase.slug} outputExists should be false`);
+      assert.strictEqual(phase.completed, false, `${phase.slug} completed should be false`);
     }
   } finally {
     cleanupTempDir(tmpDir);
@@ -133,7 +134,7 @@ test('scanPipelinePhases: file with completed: true frontmatter returns complete
   });
   try {
     const result = scanPipelinePhases(tmpDir);
-    const preflight = result.find(p => p.name === 'preflight');
+    const preflight = result.find(p => p.slug === 'preflight');
     assert.strictEqual(preflight.outputExists, true);
     assert.strictEqual(preflight.completed, true);
   } finally {
@@ -147,7 +148,7 @@ test('scanPipelinePhases: file with completed: false returns completed false', (
   });
   try {
     const result = scanPipelinePhases(tmpDir);
-    const clarify = result.find(p => p.name === 'clarify');
+    const clarify = result.find(p => p.slug === 'clarify');
     assert.strictEqual(clarify.outputExists, true);
     assert.strictEqual(clarify.completed, false);
   } finally {
@@ -161,7 +162,7 @@ test('scanPipelinePhases: file without frontmatter returns completed false', () 
   });
   try {
     const result = scanPipelinePhases(tmpDir);
-    const research = result.find(p => p.name === 'research');
+    const research = result.find(p => p.slug === 'research');
     assert.strictEqual(research.outputExists, true);
     assert.strictEqual(research.completed, false);
   } finally {
