@@ -112,19 +112,19 @@ Requirements for initial release. Each maps to roadmap phases.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | ORCH-01 | Phase 1 | Complete |
-| ORCH-02 | Phase 1 | Complete |
+| ORCH-02 | Phase 1, 7 | Complete |
 | ORCH-03 | Phase 2 | Complete |
 | ORCH-04 | Phase 2 | Complete |
-| ORCH-05 | Phase 2 | Complete |
-| ORCH-06 | Phase 5 | Complete |
-| ORCH-07 | Phase 5 | Complete |
+| ORCH-05 | Phase 2, 9 | Complete |
+| ORCH-06 | Phase 5, 9 | Complete |
+| ORCH-07 | Phase 5, 10 | Complete |
 | ORCH-08 | Phase 1 | Complete |
 | STATE-01 | Phase 1 | Complete |
 | STATE-02 | Phase 1 | Complete |
 | STATE-03 | Phase 1 | Complete |
 | STATE-04 | Phase 1 | Complete |
 | STATE-05 | Phase 1 | Complete |
-| STATE-06 | Phase 1 | Complete |
+| STATE-06 | Phase 1, 9 | Complete |
 | STATE-07 | Phase 2 | Complete |
 | STATE-08 | Phase 1 | Complete |
 | RSRCH-01 | Phase 3 | Complete |
@@ -138,7 +138,7 @@ Requirements for initial release. Each maps to roadmap phases.
 | RSLV-01 | Phase 3 | Complete |
 | RSLV-02 | Phase 3 | Complete |
 | RSLV-03 | Phase 3 | Complete |
-| CONV-01 | Phase 4 | Complete |
+| CONV-01 | Phase 4, 9 | Complete |
 | CONV-02 | Phase 4 | Complete |
 | CONV-03 | Phase 4 | Complete |
 | CONV-04 | Phase 4 | Complete |
@@ -149,10 +149,10 @@ Requirements for initial release. Each maps to roadmap phases.
 | REVW-01 | Phase 4 | Complete |
 | REVW-02 | Phase 4 | Complete |
 | REVW-03 | Phase 4 | Complete |
-| TIME-01 | Phase 5 | Complete |
+| TIME-01 | Phase 5, 6 | Complete |
 | TIME-02 | Phase 5 | Complete |
 | TIME-03 | Phase 5 | Complete |
-| TIME-04 | Phase 5 | Complete |
+| TIME-04 | Phase 5, 6 | Complete |
 
 **Coverage:**
 - v1 requirements: 42 total

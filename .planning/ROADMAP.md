@@ -20,6 +20,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 6: Time Budget Init Integration** - Fix init pipeline time_budget_expires + SKILL.md field name alignment
 - [ ] **Phase 7: Preflight Cache + Skip-on-Resume** - Write preflight cache, populate preflight_passed in init
 - [ ] **Phase 8: Tech Debt Cleanup** - Replace stub templates, remove dead exports
+- [ ] **Phase 9: Integration Polish** - Fix {phase_name} variable ambiguity + YOLO bead_format fallback
+- [ ] **Phase 10: Cosmetic Cleanup** - loadConfig defaults, ROADMAP checkboxes, traceability table, dead code
 
 ## Phase Details
 
@@ -136,10 +138,33 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. lib/preflight.cjs only exports symbols that are imported elsewhere
 **Plans**: 0 plans (to be planned)
 
+### Phase 9: Integration Polish
+**Goal:** Fix SKILL.md {phase_name} variable ambiguity and add YOLO convert bead_format fallback — eliminates the two low-severity integration gaps
+**Depends on**: Phase 8
+**Requirements**: ORCH-05, STATE-06, ORCH-06, CONV-01
+**Gap Closure:** Closes INT-03, INT-04, Flow "User gate excerpt" from v1.0 audit
+**Success Criteria** (what must be TRUE):
+  1. SKILL.md Step 6 excerpt/skip path uses pipeline phase slug (e.g., `research`, `convert`) not GSD dev-phase name
+  2. YOLO convert path auto-prompts or falls back to default bead_format when config value is null
+  3. Flow "User gate excerpt" completes end-to-end without ambiguity
+**Plans**: 0 plans (to be planned)
+
+### Phase 10: Cosmetic Cleanup
+**Goal:** Fix loadConfig defaults, update stale ROADMAP checkboxes, align traceability table, remove dead code — all info-severity items
+**Depends on**: Phase 9
+**Requirements**: ORCH-07
+**Gap Closure:** Closes INT-05, INT-06, tech debt from v1.0 audit
+**Success Criteria** (what must be TRUE):
+  1. `loadConfig` includes `auto_advance_started_at` in defaults (no CONFIG_KEY_NOT_FOUND)
+  2. ROADMAP.md phase checkboxes reflect actual completion status
+  3. REQUIREMENTS.md traceability table maps TIME-01/TIME-04 to Phase 6 and ORCH-02 to Phase 7
+  4. Dead `spliceFrontmatter` function body removed from lib/frontmatter.cjs
+**Plans**: 0 plans (to be planned)
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -151,3 +176,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 | 6. Time Budget Init Integration | 0/1 | Not started | - |
 | 7. Preflight Cache + Skip-on-Resume | 0/0 | Not started | - |
 | 8. Tech Debt Cleanup | 0/0 | Not started | - |
+| 9. Integration Polish | 0/0 | Not started | - |
+| 10. Cosmetic Cleanup | 0/0 | Not started | - |
