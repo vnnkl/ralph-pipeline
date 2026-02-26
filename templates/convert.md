@@ -40,9 +40,12 @@ If mode is "yolo":
 - If bead_format is set (not null/empty): use it as CHOSEN_FORMAT, skip AskUserQuestion
   - Log: "YOLO mode: using bead format '{bead_format}' from config"
   - Map bead_format to CHOSEN_SKILL (same mapping as below)
-- If bead_format is NOT set: FAIL with error. In YOLO mode, bead_format must be pre-configured.
-  - Write .planning/pipeline/convert.md with completed: false
-  - Return: ## PHASE FAILED -- YOLO mode requires bead_format in config.json. Set via: node ralph-tools.cjs config-set bead_format bd
+- If bead_format is NOT set: Fall back to manual selection.
+  - Log: "YOLO mode: bead_format not set in config. Falling back to manual selection."
+  - Present the AskUserQuestion bead format choice (same options as non-YOLO path below).
+  - After selection, save to config: `node ralph-tools.cjs config-set bead_format {choice}`
+  - Log: "Bead format set to '{choice}' for this project."
+  - Use the selected format as CHOSEN_FORMAT and map to CHOSEN_SKILL.
 
 If mode is NOT "yolo":
 
