@@ -248,7 +248,10 @@ function main() {
     }
 
     case 'preflight': {
-      preflight.cmdPreflight(cwd, raw);
+      const forceIdx = args.indexOf('--force');
+      const force = forceIdx !== -1;
+      if (forceIdx !== -1) args.splice(forceIdx, 1);
+      preflight.cmdPreflight(cwd, raw, force);
       break;
     }
 
