@@ -110,7 +110,8 @@ Decimal phases appear between their surrounding integers in numeric order.
   1. `cmdInitPipeline` returns `time_budget_expires` field populated from config.json
   2. SKILL.md Step 1b references exact field names matching time-budget estimate output (`estimated_beads_remaining`, `avg_bead_duration_display`)
   3. Test verifies init pipeline output includes `time_budget_expires` when time budget is set
-**Plans**: 0 plans (to be planned)
+**Plans**: 1 plan
+- [ ] 06-01-PLAN.md -- Fix init pipeline time_budget_expires + SKILL.md Step 1b field name alignment + test
 
 ### Phase 7: Preflight Cache + Skip-on-Resume
 **Goal:** Preflight writes a cache file on success so init pipeline can report `preflight_passed` and skip re-running preflight on resume
@@ -146,6 +147,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 | 3. Phase Content | 2/2 | Complete | 2026-02-25 |
 | 4. Execution Layer | 3/3 | Complete | 2026-02-25 |
 | 5. Advanced Features | 0/3 | Not started | - |
-| 6. Time Budget Init Integration | 0/0 | Not started | - |
+| 6. Time Budget Init Integration | 0/1 | Not started | - |
 | 7. Preflight Cache + Skip-on-Resume | 0/0 | Not started | - |
 | 8. Tech Debt Cleanup | 0/0 | Not started | - |
