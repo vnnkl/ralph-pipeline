@@ -161,7 +161,8 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. ROADMAP.md phase checkboxes reflect actual completion status
   3. REQUIREMENTS.md traceability table maps TIME-01/TIME-04 to Phase 6 and ORCH-02 to Phase 7
   4. Dead `spliceFrontmatter` function body removed from lib/frontmatter.cjs
-**Plans**: 0 plans (to be planned)
+**Plans**: 1 plan
+- [ ] 10-01-PLAN.md -- loadConfig defaults, ROADMAP checkboxes, traceability table, dead code removal
 
 ## Progress
 
@@ -179,4 +180,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 7. Preflight Cache + Skip-on-Resume | 0/0 | Not started | - |
 | 8. Tech Debt Cleanup | 0/0 | Not started | - |
 | 9. Integration Polish | 2/2 | Complete | 2026-02-26 |
-| 10. Cosmetic Cleanup | 0/0 | Not started | - |
+| 10. Cosmetic Cleanup | 0/1 | Not started | - |
