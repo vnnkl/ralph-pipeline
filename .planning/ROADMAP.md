@@ -20,7 +20,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 6: Time Budget Init Integration** - Fix init pipeline time_budget_expires + SKILL.md field name alignment
 - [ ] **Phase 7: Preflight Cache + Skip-on-Resume** - Write preflight cache, populate preflight_passed in init
 - [ ] **Phase 8: Tech Debt Cleanup** - Replace stub templates, remove dead exports
-- [ ] **Phase 9: Integration Polish** - Fix {phase_name} variable ambiguity + YOLO bead_format fallback
+- [x] **Phase 9: Integration Polish** - Fix {phase_name} variable ambiguity + YOLO bead_format fallback
 - [ ] **Phase 10: Cosmetic Cleanup** - loadConfig defaults, ROADMAP checkboxes, traceability table, dead code
 
 ## Phase Details
@@ -178,5 +178,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 6. Time Budget Init Integration | 0/1 | Not started | - |
 | 7. Preflight Cache + Skip-on-Resume | 0/0 | Not started | - |
 | 8. Tech Debt Cleanup | 0/0 | Not started | - |
-| 9. Integration Polish | 0/0 | Not started | - |
+| 9. Integration Polish | 2/2 | Complete | 2026-02-26 |
 | 10. Cosmetic Cleanup | 0/0 | Not started | - |
