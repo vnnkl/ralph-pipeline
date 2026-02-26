@@ -12,14 +12,14 @@ Build a Claude Code skill that orchestrates a 9-phase idea-to-code pipeline usin
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Foundation** - ralph-tools.cjs CLI + .planning/ schema + pre-flight skeleton
+- [x] **Phase 1: Foundation** - ralph-tools.cjs CLI + .planning/ schema + pre-flight skeleton
 - [x] **Phase 2: Orchestrator Shell** - SKILL.md entry point, phase sequencing, /clear boundary pattern, user gates
 - [x] **Phase 3: Phase Content** - Research, PRD, Deepen, and Resolution subagent prompts
 - [x] **Phase 4: Execution Layer** - Conversion, headless execution, bead results, compound review
-- [ ] **Phase 5: Advanced Features** - YOLO mode, auto-advance chain, time budget, configurable depth
-- [ ] **Phase 6: Time Budget Init Integration** - Fix init pipeline time_budget_expires + SKILL.md field name alignment
-- [ ] **Phase 7: Preflight Cache + Skip-on-Resume** - Write preflight cache, populate preflight_passed in init
-- [ ] **Phase 8: Tech Debt Cleanup** - Replace stub templates, remove dead exports
+- [x] **Phase 5: Advanced Features** - YOLO mode, auto-advance chain, time budget, configurable depth
+- [x] **Phase 6: Time Budget Init Integration** - Fix init pipeline time_budget_expires + SKILL.md field name alignment
+- [x] **Phase 7: Preflight Cache + Skip-on-Resume** - Write preflight cache, populate preflight_passed in init
+- [x] **Phase 8: Tech Debt Cleanup** - Replace stub templates, remove dead exports
 - [x] **Phase 9: Integration Polish** - Fix {phase_name} variable ambiguity + YOLO bead_format fallback
 - [ ] **Phase 10: Cosmetic Cleanup** - loadConfig defaults, ROADMAP checkboxes, traceability table, dead code
 
@@ -83,10 +83,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Quality gates (tests pass, type checks pass) are enforced per bead -- a failing bead stops the batch and surfaces the failure clearly
   4. Post-execution review spawns four parallel agents (security, architecture, performance, simplicity) and categorizes findings as P1/P2/P3
   5. Review gate presents fix P1s / fix P1+P2 / skip / re-run / create PR options and executes the chosen action
-**Plans**: 3 plans
+**Plans**: 4 plans
 - [x] 04-01-PLAN.md -- Convert template (bead format gate, skill chaining, frontend detection, bead validation)
 - [x] 04-02-PLAN.md -- Execute template (headless claude -p / manual ralph-tui, stop-on-failure, result files)
 - [x] 04-03-PLAN.md -- Review template + PHASE_FILES (parallel review agents, P1/P2/P3, fix/re-run/PR gate)
+- [x] 04-04-PLAN.md -- Quality gate injection into bead prompts
 
 ### Phase 5: Advanced Features
 **Goal**: YOLO mode, auto-advance chain, and time budget work as described -- users can run the full pipeline hands-free overnight
@@ -99,9 +100,9 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. User specifies a time budget in hours; ralph-tools.cjs records time_budget_expires in config.json and the pipeline stops auto-advancing after the budget expires -- the current phase always finishes before stopping
   4. Time budget value persists across /clear -- a new session reads config.json and continues budget enforcement correctly
 **Plans**: 3 plans
-- [ ] 05-01-PLAN.md -- Time budget CLI: lib/time-budget.cjs, loadConfig defaults, ralph-tools.cjs routing
-- [ ] 05-02-PLAN.md -- YOLO mode: --yolo flag detection in SKILL.md, gate bypass in all 9 templates
-- [ ] 05-03-PLAN.md -- Auto-advance: SessionStart hook, time budget phase boundary check, /clear chain logic
+- [x] 05-01-PLAN.md -- Time budget CLI: lib/time-budget.cjs, loadConfig defaults, ralph-tools.cjs routing
+- [x] 05-02-PLAN.md -- YOLO mode: --yolo flag detection in SKILL.md, gate bypass in all 9 templates
+- [x] 05-03-PLAN.md -- Auto-advance: SessionStart hook, time budget phase boundary check, /clear chain logic
 
 ### Phase 6: Time Budget Init Integration
 **Goal:** Fix init pipeline to return `time_budget_expires` and align SKILL.md Step 1b variable names with actual output keys — eliminates accidental correctness and undefined behavior
@@ -113,7 +114,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. SKILL.md Step 1b references exact field names matching time-budget estimate output (`estimated_beads_remaining`, `avg_bead_duration_display`)
   3. Test verifies init pipeline output includes `time_budget_expires` when time budget is set
 **Plans**: 1 plan
-- [ ] 06-01-PLAN.md -- Fix init pipeline time_budget_expires + SKILL.md Step 1b field name alignment + test
+- [x] 06-01-PLAN.md -- Fix init pipeline time_budget_expires + SKILL.md Step 1b field name alignment + test
 
 ### Phase 7: Preflight Cache + Skip-on-Resume
 **Goal:** Preflight writes a cache file on success so init pipeline can report `preflight_passed` and skip re-running preflight on resume
@@ -125,7 +126,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. `cmdInitPipeline` reads preflight cache and returns `preflight_passed: true` when cache is fresh
   3. Test verifies preflight cache write/read cycle and stale cache detection
 **Plans**: 1 plan
-- [ ] 07-01-PLAN.md -- TDD: preflight cache write, init cache read (remove TTL, add version check), --force flag, gitignore, tests
+- [x] 07-01-PLAN.md -- TDD: preflight cache write, init cache read (remove TTL, add version check), --force flag, gitignore, tests
 
 ### Phase 8: Tech Debt Cleanup
 **Goal:** Replace stub templates with functional implementations and remove dead exports
@@ -136,7 +137,9 @@ Decimal phases appear between their surrounding integers in numeric order.
   1. templates/preflight.md invokes `cmdPreflight` CLI and reports results instead of immediately writing completed: true
   2. templates/clarify.md gathers project scope via AskUserQuestion instead of immediately writing completed: true
   3. lib/preflight.cjs only exports symbols that are imported elsewhere
-**Plans**: 0 plans (to be planned)
+**Plans**: 2 plans
+- [x] 08-01-PLAN.md -- Replace preflight stub template + remove dead exports
+- [x] 08-02-PLAN.md -- Replace clarify stub template with AskUserQuestion flow
 
 ### Phase 9: Integration Polish
 **Goal:** Fix SKILL.md {phase_name} variable ambiguity and add YOLO convert bead_format fallback — eliminates the two low-severity integration gaps
@@ -148,8 +151,8 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. YOLO convert path auto-prompts or falls back to default bead_format when config value is null
   3. Flow "User gate excerpt" completes end-to-end without ambiguity
 **Plans**: 2 plans
-- [ ] 09-01-PLAN.md -- Rename cascade: PIPELINE_PHASES slug+displayName, scanPipelinePhases, tests, all 9 template variables
-- [ ] 09-02-PLAN.md -- SKILL.md variable table + excerpt/skip fix + YOLO bead_format prompt + convert.md fallback
+- [x] 09-01-PLAN.md -- Rename cascade: PIPELINE_PHASES slug+displayName, scanPipelinePhases, tests, all 9 template variables
+- [x] 09-02-PLAN.md -- SKILL.md variable table + excerpt/skip fix + YOLO bead_format prompt + convert.md fallback
 
 ### Phase 10: Cosmetic Cleanup
 **Goal:** Fix loadConfig defaults, update stale ROADMAP checkboxes, align traceability table, remove dead code — all info-severity items
@@ -174,10 +177,10 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 1. Foundation | 5/5 | Complete | 2026-02-25 |
 | 2. Orchestrator Shell | 2/2 | Complete | 2026-02-25 |
 | 3. Phase Content | 2/2 | Complete | 2026-02-25 |
-| 4. Execution Layer | 3/3 | Complete | 2026-02-25 |
-| 5. Advanced Features | 0/3 | Not started | - |
-| 6. Time Budget Init Integration | 0/1 | Not started | - |
-| 7. Preflight Cache + Skip-on-Resume | 0/0 | Not started | - |
-| 8. Tech Debt Cleanup | 0/0 | Not started | - |
+| 4. Execution Layer | 4/4 | Complete | 2026-02-25 |
+| 5. Advanced Features | 3/3 | Complete | 2026-02-25 |
+| 6. Time Budget Init Integration | 1/1 | Complete | 2026-02-26 |
+| 7. Preflight Cache + Skip-on-Resume | 1/1 | Complete | 2026-02-26 |
+| 8. Tech Debt Cleanup | 2/2 | Complete | 2026-02-26 |
 | 9. Integration Polish | 2/2 | Complete | 2026-02-26 |
-| 10. Cosmetic Cleanup | 0/1 | Not started | - |
+| 10. Cosmetic Cleanup | 1/1 | Not started | - |
