@@ -15,7 +15,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **ORCH-04**: Each phase transition triggers /clear for true context isolation (fresh session per phase)
 - [x] **ORCH-05**: User gates between phases via AskUserQuestion (approve/redirect/replan)
 - [x] **ORCH-06**: YOLO mode auto-approves all gates without user interaction
-- [ ] **ORCH-07**: Auto-advance chain (--auto flag): phases advance hands-free from research through review
+- [x] **ORCH-07**: Auto-advance chain (--auto flag): phases advance hands-free from research through review
 - [x] **ORCH-08**: GSD repo cloned to .reference/get-shit-done/ and gitignored as authoritative implementation reference — subagents Read actual source files rather than relying on training data
 
 ### State Management
@@ -75,8 +75,8 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Time Budget
 
 - [x] **TIME-01**: User can specify time budget in hours at pipeline start
-- [ ] **TIME-02**: Pipeline auto-advances through phases until budget expires
-- [ ] **TIME-03**: Current phase always finishes before stopping (clean phase boundaries)
+- [x] **TIME-02**: Pipeline auto-advances through phases until budget expires
+- [x] **TIME-03**: Current phase always finishes before stopping (clean phase boundaries)
 - [x] **TIME-04**: Time remaining persisted to config.json (survives /clear between phases)
 
 ## v2 Requirements
@@ -117,7 +117,7 @@ Requirements for initial release. Each maps to roadmap phases.
 | ORCH-04 | Phase 2 | Complete |
 | ORCH-05 | Phase 2 | Complete |
 | ORCH-06 | Phase 5 | Complete |
-| ORCH-07 | Phase 5 | Pending |
+| ORCH-07 | Phase 5 | Complete |
 | ORCH-08 | Phase 1 | Complete |
 | STATE-01 | Phase 1 | Complete |
 | STATE-02 | Phase 1 | Complete |
@@ -150,8 +150,8 @@ Requirements for initial release. Each maps to roadmap phases.
 | REVW-02 | Phase 4 | Complete |
 | REVW-03 | Phase 4 | Complete |
 | TIME-01 | Phase 5 | Complete |
-| TIME-02 | Phase 5 | Pending |
-| TIME-03 | Phase 5 | Pending |
+| TIME-02 | Phase 5 | Complete |
+| TIME-03 | Phase 5 | Complete |
 | TIME-04 | Phase 5 | Complete |
 
 **Coverage:**
