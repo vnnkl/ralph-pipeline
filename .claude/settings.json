@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/ralph-auto-advance.js\"",
+            "timeout": 5000
+          }
+        ]
+      }
+    ]
+  }
+}
