@@ -95,7 +95,32 @@ If the user chooses **Manual** (or "1" or "manual"):
    If "All passed": create result files for each bead with `status: passed`.
    If "Let me specify": ask the user to provide the status for each bead, then write result files accordingly.
 
-6. Skip to Step 5 (Aggregate Results).
+6. Proceed to Step 3a.1 (Manual Mode Duration Tracking).
+
+### Step 3a.1: Manual Mode Duration Tracking
+
+After manual result collection (Step 3a), compute per-bead durations from result file timestamps and record them.
+
+1. List result files that have an `executed:` timestamp:
+   ```bash
+   ls .claude/pipeline/bead-results/*.md 2>/dev/null
+   ```
+
+2. If no result files exist, skip duration tracking entirely. (User chose "All passed" without files -- nothing to measure.)
+
+3. If result files exist, extract the `executed:` timestamp from each file's YAML frontmatter. Sort the files by their `executed` timestamp (ascending).
+
+4. Compute per-bead durations using consecutive timestamps:
+   - For the first bead: `duration = executed_timestamp - EXEC_START_TIME`
+   - For subsequent beads: `duration = executed_timestamp(N) - executed_timestamp(N-1)`
+
+5. For each computed duration (in milliseconds), call:
+   ```bash
+   node ralph-tools.cjs time-budget record-bead $DURATION
+   ```
+   Skip any bead where the computed duration is zero or negative (indicates a timestamp issue).
+
+6. Log: "Recorded duration for {N} beads from manual execution."
 
 ### Step 3b: Headless Mode
 
