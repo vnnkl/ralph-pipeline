@@ -93,7 +93,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. --auto flag enables auto-advance: pipeline sequences through all phases hands-free from the current phase to completion, chaining modeled on `.reference/get-shit-done/workflows/plan-phase.md`
   3. User specifies a time budget in hours; ralph-tools.cjs records time_budget_expires in config.json and the pipeline stops auto-advancing after the budget expires -- the current phase always finishes before stopping
   4. Time budget value persists across /clear -- a new session reads config.json and continues budget enforcement correctly
-**Plans**: TBD
+**Plans**: 3 plans
+- [ ] 05-01-PLAN.md -- Time budget CLI: lib/time-budget.cjs, loadConfig defaults, ralph-tools.cjs routing
+- [ ] 05-02-PLAN.md -- YOLO mode: --yolo flag detection in SKILL.md, gate bypass in all 9 templates
+- [ ] 05-03-PLAN.md -- Auto-advance: SessionStart hook, time budget phase boundary check, /clear chain logic
 
 ## Progress
 
@@ -106,4 +109,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 2. Orchestrator Shell | 2/2 | Complete | 2026-02-25 |
 | 3. Phase Content | 2/2 | Complete | 2026-02-25 |
 | 4. Execution Layer | 3/3 | Complete | 2026-02-25 |
-| 5. Advanced Features | 0/TBD | Not started | - |
+| 5. Advanced Features | 0/3 | Not started | - |
