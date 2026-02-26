@@ -21,7 +21,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 7: Preflight Cache + Skip-on-Resume** - Write preflight cache, populate preflight_passed in init
 - [x] **Phase 8: Tech Debt Cleanup** - Replace stub templates, remove dead exports
 - [x] **Phase 9: Integration Polish** - Fix {phase_name} variable ambiguity + YOLO bead_format fallback
-- [ ] **Phase 10: Cosmetic Cleanup** - loadConfig defaults, ROADMAP checkboxes, traceability table, dead code
+- [x] **Phase 10: Cosmetic Cleanup** - loadConfig defaults, ROADMAP checkboxes, traceability table, dead code (completed 2026-02-26)
 
 ## Phase Details
 
@@ -165,7 +165,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. REQUIREMENTS.md traceability table maps TIME-01/TIME-04 to Phase 6 and ORCH-02 to Phase 7
   4. Dead `spliceFrontmatter` function body removed from lib/frontmatter.cjs
 **Plans**: 1 plan
-- [ ] 10-01-PLAN.md -- loadConfig defaults, ROADMAP checkboxes, traceability table, dead code removal
+- [x] 10-01-PLAN.md -- loadConfig defaults, ROADMAP checkboxes, traceability table, dead code removal
 
 ## Progress
 
@@ -183,4 +183,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 7. Preflight Cache + Skip-on-Resume | 1/1 | Complete | 2026-02-26 |
 | 8. Tech Debt Cleanup | 2/2 | Complete | 2026-02-26 |
 | 9. Integration Polish | 2/2 | Complete | 2026-02-26 |
-| 10. Cosmetic Cleanup | 1/1 | Not started | - |
+| 10. Cosmetic Cleanup | 1/1 | Complete   | 2026-02-26 |
