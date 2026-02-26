@@ -34,6 +34,18 @@ Report: "Found {TOTAL_BEADS} beads ready for execution."
 
 ### Step 2: Present Execution Gate
 
+Read the pipeline mode:
+```bash
+node ralph-tools.cjs config-get mode --raw
+```
+
+If mode is "yolo":
+- Default to manual mode (locked decision from CONTEXT.md: user wants to be present for execution)
+- Log: "YOLO mode: defaulting to manual execution (ralph-tui)"
+- Skip AskUserQuestion, proceed to Step 3a (Manual Mode)
+
+If mode is NOT "yolo":
+
 Present the execution mode choice to the user. Manual is the DEFAULT option.
 
 Use AskUserQuestion with these options:
@@ -192,6 +204,20 @@ After execution completes (all beads passed, or batch stopped on failure, or man
 3. If any bead failed, proceed to Step 6 (Handle Failure). Otherwise, skip to Step 7 (Write Completion File).
 
 ### Step 6: Handle Failure
+
+Read the pipeline mode:
+```bash
+node ralph-tools.cjs config-get mode --raw
+```
+
+If mode is "yolo":
+- Auto-advance failure handling: skip the failed bead and continue
+- Instead of stopping the batch on failure, in YOLO mode: log the failure, write the result file with status: failed, increment FAILED counter, and CONTINUE to the next bead
+- After all beads complete, if any failed, auto-select "Proceed" at the failure gate
+- Log: "YOLO mode: {FAILED} bead(s) failed, continuing. Review phase will flag gaps."
+- Skip to Step 7 (Write Completion File)
+
+If mode is NOT "yolo":
 
 If any bead failed, present the failure gate:
 

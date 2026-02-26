@@ -11,6 +11,7 @@ Spawn parallel research agents to analyze the project from multiple angles, synt
 </files_to_read>
 
 <instructions>
+<!-- YOLO mode: gate bypass handled by orchestrator (SKILL.md Step 6) -->
 ## Research Phase
 
 You are a research orchestrator. Your job is to spawn parallel research agents, wait for their outputs, then synthesize results into a unified summary.

@@ -290,6 +290,18 @@ Present this report to the user.
 
 ### Step 4: Present Gate
 
+Read the pipeline mode:
+```bash
+node ralph-tools.cjs config-get mode --raw
+```
+
+If mode is "yolo":
+- Log: "YOLO mode: auto-selecting proceed for deepen phase"
+- Skip the AskUserQuestion gate
+- Go directly to Step 7 (Write Completion File)
+
+If mode is NOT "yolo":
+
 After presenting findings, offer the gate options. The recommended option depends on P1 count:
 
 **If P1 > 0:** Recommend "Refine"

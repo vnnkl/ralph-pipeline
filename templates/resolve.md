@@ -67,6 +67,25 @@ Report the total count: "Found {N} unresolved items ({M} in PRD, {K} in open-que
 
 If zero items found, skip to Step 5 (Write Completion File) immediately.
 
+### Step 2.5: Check YOLO Mode
+
+Read the pipeline mode:
+```bash
+node ralph-tools.cjs config-get mode --raw
+```
+
+If mode is "yolo":
+- Skip all AskUserQuestion calls in Step 3
+- For each unresolved item, Claude autonomously generates a reasonable answer based on PROJECT_SCOPE and stack context
+- Tag each auto-resolved answer with [YOLO-RESOLVED] prefix: "[YOLO-RESOLVED] {answer}"
+- Write the answer inline to the PRD immediately (same as Step 3e)
+- Mark open questions as resolved (same as Step 3f)
+- Log: "YOLO mode: auto-resolved {current}/{total}: {short description}"
+- After all items resolved, skip vague answer detection (Step 3d) entirely
+- Continue to Step 4 (Final Validation Re-scan)
+
+If mode is NOT "yolo":
+
 ### Step 3: Resolve Each Item One-by-One
 
 For each unresolved item in the ordered list, perform the following steps. Do NOT batch items -- present them one at a time.

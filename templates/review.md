@@ -358,6 +358,17 @@ Present this report to the user.
 
 ### Step 6: Present Review Gate
 
+Read the pipeline mode:
+```bash
+node ralph-tools.cjs config-get mode --raw
+```
+
+If mode is "yolo":
+- Log: "YOLO mode: auto-selecting skip for review gate (accepting all findings)"
+- Skip AskUserQuestion, go directly to Step 7 (Write Completion File)
+
+If mode is NOT "yolo":
+
 After presenting findings, present the review gate. Six options (locked decision from CONTEXT.md):
 
 ```

@@ -11,6 +11,7 @@ Create a Product Requirements Document (PRD) by invoking the /ralph-tui-prd skil
 </files_to_read>
 
 <instructions>
+<!-- YOLO mode: gate bypass handled by orchestrator (SKILL.md Step 6) -->
 ## PRD Phase
 
 You are a PRD orchestrator. Your job is to invoke the /ralph-tui-prd skill with research context, validate the PRD output, extract open questions, and write the completion file.

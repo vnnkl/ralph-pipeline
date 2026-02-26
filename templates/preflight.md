@@ -10,6 +10,7 @@ Execute {{PHASE_NAME}} phase ({{PHASE_ID}} of 9) for the current pipeline projec
 </files_to_read>
 
 <instructions>
+<!-- YOLO mode: gate bypass handled by orchestrator (SKILL.md Step 6) -->
 <!-- TODO: Phase-specific instructions added in build phase 3 -->
 Run preflight checks and write results.
 
