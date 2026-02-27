@@ -1,233 +1,211 @@
 # Feature Research
 
-**Domain:** AI coding orchestration pipeline (Claude Code skill, idea-to-shipped-code)
-**Researched:** 2026-02-25
-**Confidence:** HIGH — cross-verified against GSD source, ralph-pipeline source, multiple 2025-2026 ecosystem sources
-
----
+**Domain:** Marathon mode + codemaps integration for AI coding pipeline orchestrator
+**Researched:** 2026-02-27
+**Confidence:** HIGH
 
 ## Feature Landscape
 
 ### Table Stakes (Users Expect These)
 
-Features users assume exist. Missing these = product feels incomplete or broken.
+Features users assume exist when a pipeline offers "marathon mode" or "codemap integration." Missing these = product feels broken or half-baked.
+
+#### Marathon Mode Table Stakes
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| Resumable state | Pipeline runs crash, contexts compact, sessions end mid-phase; users expect to pick up where they left — "50 First Dates" problem is well-known | MEDIUM | Disk-persisted state.md / STATE.md is the established pattern; filesystem fallback for no state file |
-| Phase-based execution | Users expect clear boundaries between planning and doing; all established systems (GSD, ralph-pipeline, cursor workflows) use phases | MEDIUM | Each phase = atomic unit of work with defined inputs/outputs |
-| Dependency check / pre-flight | Pipeline fails silently if upstream tools are missing; users expect an upfront check | LOW | Check for ralph-tui, bd/br CLIs, required skills; offer install commands |
-| Git integration (auto-init, commits, .gitignore) | Every serious coding pipeline commits work; users expect per-task commits and clean git state | MEDIUM | Auto-init repo, per-task commits, enforce .gitignore entries |
-| Parallel agent execution (research/review) | Multiple independent agents running simultaneously is expected now; sequential-only feels slow | MEDIUM | Research agents in parallel; review agents in parallel — established pattern in GSD and ralph-pipeline |
-| Disk-persisted phase outputs | Context compaction can wipe in-memory progress; users expect phase files to survive resets | LOW | YAML frontmatter with completed: true/false is the established pattern |
-| User gates between phases | Automated pipelines without control points feel like "YOLO mode"; users expect to review and steer | LOW | AskUserQuestion between phases; approve/redirect/replan |
-| Quality gate enforcement | Users expect that quality checks (tests, type checks) are baked in and enforced per-task | MEDIUM | Quality gates in acceptance criteria; run before commit |
-| Skill chaining (invoke, don't reimplement) | /ralph-tui-prd, /ralph-tui-create-beads already exist; users expect composition not duplication | LOW | Skills invoked as-is; pipeline stays thin and orchestrates |
-| Structured planning directory | .planning/ with PROJECT.md, ROADMAP, STATE, REQUIREMENTS is established convention | LOW | GSD and ralph-pipeline both use this; expected by users of either |
-| Tracer bullet / thin vertical slices | Build smallest working end-to-end slice first (DB → backend → frontend); prevents horizontal layering | HIGH | Critical pattern from Pragmatic Programmer; enforced in PRD structure |
-| Research before PRD creation | Users expect domain research, repo analysis, best-practices lookup before a PRD is written | MEDIUM | Parallel research agents: repo-research-analyst, best-practices-researcher, framework-docs-researcher |
-| Compound review after execution | Post-execution review by specialized agents (security, architecture, performance, simplicity) | MEDIUM | Parallel P1/P2/P3 categorized findings |
+| Upfront planning for all phases | Core value prop of marathon mode -- plan-then-execute is the defining pattern. Every plan-and-execute system (SPARC, Traycer, Cursor Plan Mode) separates thinking from doing. Users expect to see and approve the full plan before execution begins. | MEDIUM | Reuse existing templates for phases 1-7 but run them sequentially without /clear between them. Planning = phases 1-7; execution = phase 8; review = phase 9. Existing SKILL.md Step 7b handles /clear -- marathon skips it for planning phases. |
+| Single merged bead queue | Users expect one flat ordered list of all beads to execute, not per-phase batches. The phase 7 (convert) output already produces `.beads/*.md`. Marathon treats this as one execution run. No structural change to bead format needed. | LOW | Already produced by convert phase. Marathon just frames it as "the queue." No new data structures. |
+| Time budget applies to execution only | Users budget hours for actual coding work, not planning overhead. Planning is "free" context overhead. Addy Osmani calls this "waterfall in 15 minutes" -- the spec phase is fast, execution is expensive. | LOW | Existing `time-budget start` command just needs to be called after planning completes (before phase 8) instead of at pipeline start. Move time-budget prompt from SKILL.md Step 1b to after phase 7 gate. |
+| Progress reporting during execution | Users expect bead-by-bead progress: "Executing 7/23: setup-database -> PASSED". Standard for any batch tool (AWS CodePipeline, Azure Pipelines, CI/CD). | LOW | Already implemented in execute.md template Step 4. No changes needed. |
+| Stop-on-failure with resume | When a bead fails, stop. When re-invoked, resume from the failed bead, not restart from scratch. Standard CI/CD expectation. SnapLogic calls these "resumable pipelines." | MEDIUM | Current execute template stops on failure but restarts from scratch on retry. Marathon needs resume-from-failure: read existing result files in `.claude/pipeline/bead-results/`, skip beads with `status: passed`. Dep: existing result file format supports this. |
+| Planning output review gate | After all planning phases complete, show the full bead inventory for approval before execution starts. "Let me see everything before you touch code." Traycer's YOLO mode has plan review; SPARC has phase-transition gates. | LOW | Natural gate between phase 7 (convert) and phase 8 (execute). Reuse existing gate mechanism from SKILL.md Step 6. Show bead count, estimated time, bead list. |
+| YOLO compatibility | Marathon mode should work with YOLO mode (auto-approve all gates, auto-advance). Power users want marathon + YOLO for overnight runs. | LOW | Existing YOLO gate bypass in SKILL.md Step 6 applies to marathon's planning review gate too. No new logic needed. |
+
+#### Codemaps Integration Table Stakes
+
+| Feature | Why Expected | Complexity | Notes |
+|---------|--------------|------------|-------|
+| Run codemap before research phase | Users expect the pipeline to understand their codebase before doing research or writing a PRD. Windsurf Codemaps, codemap CLI, and GSD map-codebase all position themselves as "run first, then plan." Martin Fowler's context engineering article emphasizes pre-loading codebase context. | MEDIUM | GSD's map-codebase produces 7 files in `.planning/codebase/` via 4 parallel mapper agents. Need to invoke it (or equivalent) before phase 3. Two approaches: (a) invoke /gsd:map-codebase skill, or (b) build equivalent mapper agents into ralph-pipeline. Option (a) is simpler but adds external skill dependency. |
+| Codemap output as shared context for research agents | Research agents (repo-research, best-practices, framework-docs) should receive codemap files. The repo-research agent especially benefits from ARCHITECTURE.md and STRUCTURE.md -- it already explores the repo, but codemap gives it a head start. | LOW | Add `.planning/codebase/ARCHITECTURE.md` and `.planning/codebase/STACK.md` to PHASE_FILES for phase 3 (research). Template already uses `{{PHASE_FILES}}` -- just expand the file list. |
+| Codemap output as shared context for PRD agent | PRD creation should know the existing codebase architecture so it generates stories that fit the actual structure, not a hypothetical one. | LOW | Add `.planning/codebase/ARCHITECTURE.md` and `.planning/codebase/STACK.md` to PHASE_FILES for phase 4 (PRD). |
+| Refresh codemap after execution for review | After beads execute and change code, review agents should see the updated codebase state. Stale codemaps would give review agents wrong architectural context. The "Codified Context" paper emphasizes keeping context infrastructure current. | MEDIUM | Re-run codemap generation between phase 8 (execute) and phase 9 (review). This means the review phase PHASE_FILES gets updated codemap paths. |
+| Codemap freshness awareness | Users should know when the codemap was generated and whether it is stale. Codemap CLI uses deterministic hashes for cache reuse; GSD's map-codebase checks `has_maps` and `codebase_dir_exists`. | LOW | Check `.planning/codebase/` existence and file timestamps during pipeline init. Log "Codemap: found (generated X hours ago)" or "Codemap: not found, will generate." |
+| Selective codemap documents per phase | Not every phase needs all 7 codemap documents. Research needs STACK.md + ARCHITECTURE.md. Review needs CONCERNS.md + CONVENTIONS.md + TESTING.md. Martin Fowler: "keep context as small as possible." Sending everything wastes context budget. | LOW | Define per-phase codemap file lists in the PHASE_FILES table in SKILL.md, same pattern as existing upstream dependency mapping. |
 
 ### Differentiators (Competitive Advantage)
 
-Features that set ralph-gsd apart. Not universally expected, but highly valued.
+Features that set ralph-pipeline apart. Not required, but valuable.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| /clear between phases for true context isolation | Orchestrator stays lean (~10-15% context) while each phase gets a fresh 200k window; prevents context rot across 9 phases | HIGH | Core insight of ralph-gsd: /clear is the isolation primitive. GSD uses subagents; ralph-gsd enforces it between major phases via fresh session invocation |
-| ralph-tui as execution engine (60+ tasks overnight) | ralph-tui can run 60+ beads unattended; no other orchestration system leverages this scale | HIGH | Unique to ralph-pipeline ecosystem; the "overnight mode" differentiator |
-| Headless execution gate (claude -p per bead) | User chooses per-phase whether to run headless (automated) or manual (interactive ralph-tui) | MEDIUM | Each bead gets fresh context, no context limit across tasks; scales horizontally |
-| Time budget mode | User specifies hours; pipeline auto-advances through phases until budget expires, finishing current phase cleanly | MEDIUM | Unique to this pipeline; enables "run overnight for 8 hours" without over-running |
-| Configurable depth (quick/standard/comprehensive) | Controls beads-per-phase; allows tradeoff between speed and thoroughness | LOW | Depth config feeds into bead count heuristics during PRD/conversion |
-| Auto-advance chain (hands-free) | research → PRD → beads → execute → review → next phase with no human intervention | HIGH | GSD has --auto flag; ralph-gsd extends to ralph-tui execution phase |
-| Wave-based phase execution | One ralph-tui loop per phase; multiple phases batchable into a single overnight run | MEDIUM | Wraps GSD's wave pattern into ralph-tui's execution model |
-| Learnings harvest (post-pipeline) | Extract reusable patterns and decisions from completed work for future sessions | MEDIUM | /choo-choo-ralph:harvest + codemap refresh; closes the improvement loop |
-| Execution gate per phase (headless vs manual) | Per-phase choice between automation and control; power users run headless at night, interactive during design | LOW | Flexibility that monolithic pipelines don't offer |
-| Open questions resolution gate (Phase 4.5) | Blocking gate before conversion — no unresolved questions leak into execution | LOW | ralph-pipeline already has this; forces all decisions before bead creation |
-| PRD express path (--prd flag) | Feed an existing PRD doc directly; skip interactive clarification; for teams with pre-written specs | MEDIUM | GSD has this; natural fit for ralph-gsd |
-| Codemap integration as shared context | Codemaps in docs/CODEMAPS/ give all agents shared understanding of codebase without per-agent re-exploration | MEDIUM | Reduces per-agent context cost; ensures agents reference existing patterns |
+| Planning phase collapse with context continuity | In marathon mode, phases 1-7 run in one orchestrator session without /clear. Context accumulates across planning phases. Eliminates 6x cold-start cost of reloading context. No competitor does this -- they either use /clear everywhere (GSD) or run everything in one monolithic session (SPARC). Marathon is a deliberate middle ground. | HIGH | Requires new orchestrator mode that skips /clear for phases 1-7. Core change to SKILL.md Step 7b. Risk: accumulated context may exceed 15% budget. Mitigation: orchestrator passes file paths only (existing anti-pattern rule). |
+| Marathon dry-run mode | Show the full plan (all phases, all beads, estimated time) without executing anything. "What would marathon do?" preview. No competitor offers this. | LOW | Run phases 1-7 normally, display bead inventory from convert output + time estimate, then stop. Natural extension of planning review gate. |
+| Resume-from-failure at bead level | When marathon re-invoked after failure, skip already-passed beads. Gas Town uses "nondeterministic idempotence" for this. Most AI pipelines restart from scratch. Bead-level resume saves hours on large projects. | MEDIUM | Read `.claude/pipeline/bead-results/*.md` at execution start. Filter bead queue to exclude beads with `status: passed`. Execute remaining beads only. |
+| Codemap diff for review agents | Instead of sending full refreshed codemap, send only what changed between pre-execution and post-execution codemaps. Focused context = better review quality. No competitor does this. | HIGH | Requires diffing two codemap snapshots. Could git diff `.planning/codebase/` between pre-exec and post-exec commits. |
+| Bead queue visualization with time estimates | Before execution, show a table of beads with per-bead estimated duration and cumulative total. "Here is your execution plan, estimated 2h 15m." | LOW | Use existing `time-budget estimate` data. Format as markdown table. |
+| Dependency-aware bead ordering | Instead of flat alphabetical ordering, analyze bead dependencies and sort topologically. If bead B depends on A's output, A executes first. | MEDIUM | Parse bead frontmatter for `depends_on` field. Topological sort with cycle detection. Fall back to alphabetical if no deps declared. |
 
 ### Anti-Features (Commonly Requested, Often Problematic)
 
-Features that seem valuable but create concrete problems. Explicitly avoid building these.
+Features that seem good but create problems in the ralph-pipeline context.
 
-| Anti-Feature | Why Requested | Why Problematic | Alternative |
-|--------------|---------------|-----------------|-------------|
-| Inlining skill logic (/ralph-tui-prd, /ralph-tui-create-beads) | Seems like it would simplify the pipeline | Duplicates logic maintained in separate skills; desyncs when upstream skills update | Invoke skills as-is; chain, never reimplement |
-| Monolithic single-session execution (all 9 phases, one context) | Feels simpler; one command does everything | Context accumulates across phases, degrades quality by Phase 5+; well-documented "context rot" | /clear between phases; subagent per phase; fresh context per major unit |
-| Real-time dashboard / live streaming | Appealing UX; users want to see everything happening | Adds significant complexity for marginal value in a CLI-first tool; ralph-tui already provides TUI | ralph-tui's TUI handles execution visibility; orchestrator provides phase summaries |
-| Reusing gsd-tools.cjs directly | Saves building ralph-tools.cjs from scratch | Tightly coupled to GSD's planning structure and state format; will break as GSD evolves | Build ralph-tools.cjs purpose-built for ralph-gsd's state model; single .cjs, zero deps |
-| Harvest phase in v1 (/choo-choo-ralph) | Captures learnings; completes the loop | Adds complexity to v1 before core pipeline is validated | Drop from v1; add in v1.x after core pipeline ships |
-| Codemaps integration (/update-codemaps) in v1 | Provides context to agents | Not part of core pipeline value; adds dependency on tooling that may not be installed | Drop from v1; document as optional enhancement |
-| Compiled dependencies in ralph-tools.cjs | Richer functionality possible with npm packages | Breaks zero-dep constraint; makes skill harder to install | Single .cjs file, Node.js built-ins only; ship with skill |
-| Horizontal layering in PRD (all DB first, then all API, then all UI) | Seems organized; clear separation of concerns | Delays feedback; hides integration bugs until the end; violates tracer bullet principle | Enforce vertical slices: every story touches all layers (DB → backend → frontend) |
-| Parallel execution without dependency awareness | Speed; run everything at once | Dependent tasks fail when predecessors are not complete; no dependency graph = chaotic execution | Wave-based grouping: parallel within a wave, sequential across waves |
-| Agent autonomy without oversight gates | Fully hands-free is appealing | Bugs compound across phases; agents make locally sensible but globally inconsistent decisions | Per-phase gates; user can review, redirect, replan at each boundary |
-
----
+| Feature | Why Requested | Why Problematic | Alternative |
+|---------|---------------|-----------------|-------------|
+| Parallel bead execution in marathon | "Run multiple beads at once" | Beads modify overlapping files. Parallel execution causes merge conflicts and non-deterministic failures. Gas Town built an entire Refinery/merge queue for this -- enormous complexity that violates zero-dep constraint. | Keep sequential execution. LLM API throughput is the bottleneck, not parallelism. |
+| Auto PRD revision during marathon planning | "If deepen finds P1s, auto-fix without asking" | Breaks "review before execute" contract. Users may not notice scope-altering changes. Marathon is about efficiency, not removing oversight for critical decisions. | Present planning review gate showing P1 findings. Auto-fix only in YOLO mode (already implemented). |
+| Full codebase content as context | "Give every agent the entire codebase" | Exceeds context windows. Burns tokens. Agents perform worse with irrelevant noise. Martin Fowler: "keep context as small as possible." | Selective codemap documents per phase. Only pass what each phase needs. |
+| Live codemap updates during execution | "Update codemap after every bead" | Each codemap generation takes 5-10 minutes (4 parallel agents). Per-bead updates double execution time. ROI near-zero since review happens after all beads. | Single refresh after execution, before review. |
+| Marathon replacing standard pipeline | "Marathon should be the only mode" | Standard per-phase /clear is essential for large projects where context overflow is real. Marathon works for small-to-medium (< 30 beads). | Keep both modes. Marathon is `--marathon` flag, not default. |
+| Codemap as MCP server | "Expose codemap via MCP" | Adds external dependency. Violates zero-dep constraint. MCP servers require running processes. Overengineered for sequential pipeline. | File-based codemap in `.planning/codebase/`. Simple, stateless, survives /clear. |
+| Auto codemap without user awareness | "Silently generate codemaps" | 5-10 minute step feels like pipeline is stuck if silent. Codemap may already exist and be fresh -- regenerating wastes time. | Check for existing codemap, offer refresh/skip/generate. Log progress. |
 
 ## Feature Dependencies
 
 ```
-[Disk-persisted phase outputs]
-    └──requires──> [Resumable state]
+[Marathon mode command]
+    |
+    +--requires--> [All existing pipeline phases 1-9 working]
+    |                  (already built in v1.0 -- SATISFIED)
+    |
+    +--requires--> [Modified orchestrator loop for marathon]
+    |                  (skip /clear between phases 1-7)
+    |
+    +--requires--> [Planning review gate after phase 7]
+    |                  (approve bead inventory before execution)
+    |
+    +--requires--> [Time budget scoping change]
+    |                  (start budget after planning, not at pipeline start)
+    |
+    +--enhances--> [Resume-from-failure execution]
+                       (critical for marathon due to larger bead counts)
 
-[Auto-advance chain]
-    └──requires──> [Disk-persisted phase outputs]
-    └──requires──> [Phase-based execution]
-    └──requires──> [Quality gate enforcement]
+[Codemaps integration]
+    |
+    +--requires--> [Codemap generation capability]
+    |                  (invoke GSD map-codebase or build equivalent)
+    |
+    +--requires--> [PHASE_FILES update for codemap paths]
+    |                  (add .planning/codebase/ files to phases 3, 4, 9)
+    |
+    +--requires--> [Codemap refresh trigger between phases 8-9]
+                       (re-map after execution, before review)
 
-[Headless execution gate]
-    └──requires──> [Phase-based execution]
-    └──requires──> [ralph-tui as execution engine]
+[Marathon mode] --enhances--> [Codemaps integration]
+    (marathon generates codemap once at start, refreshes once at end)
 
-[Time budget mode]
-    └──requires──> [Auto-advance chain]
-    └──requires──> [Phase-based execution]
+[Resume-from-failure] --enhances--> [Marathon mode]
+    (critical: marathon may have 20-50 beads, full restart unacceptable)
 
-[Tracer bullet / thin vertical slices]
-    └──requires──> [Research before PRD creation]
-    └──enhances──> [Quality gate enforcement]
+[Codemap refresh] --requires--> [Pre-execution codemap exists]
+    (need "before" snapshot to know what to refresh)
 
-[Open questions resolution gate]
-    └──requires──> [Research before PRD creation]
-    └──blocks──> [Skill chaining: /ralph-tui-create-beads]
+[Planning phase collapse] --conflicts--> [Context isolation via /clear]
+    (marathon explicitly trades isolation for continuity in phases 1-7)
 
-[Compound review after execution]
-    └──requires──> [Parallel agent execution]
-    └──requires──> [Git integration]
+[Marathon dry-run] --requires--> [Marathon command entry point]
+    (variant that stops after phase 7)
 
-[Configurable depth]
-    └──enhances──> [ralph-tui as execution engine]
-    └──enhances──> [Time budget mode]
+[Bead queue visualization] --enhances--> [Planning review gate]
+    (shows time estimates alongside bead inventory)
 
-[/clear between phases]
-    └──enables──> [Auto-advance chain]
-    └──enables──> [Headless execution gate]
-
-[Codemap integration]
-    └──enhances──> [Research before PRD creation]
-    └──enhances──> [Compound review after execution]
+[Dependency-aware bead ordering] --enhances--> [Single merged bead queue]
+    (better ordering reduces failure rate)
 ```
 
 ### Dependency Notes
 
-- **Resumable state requires disk-persisted phase outputs:** Without phase files with completed: flags, resuming requires re-running completed work.
-- **Auto-advance chain requires quality gates:** Auto-advance without gates produces garbage downstream; gates are what make automation trustworthy.
-- **Open questions gate blocks conversion:** Intentional hard dependency — ambiguous specs produce ambiguous beads. No bypass.
-- **Time budget mode requires auto-advance:** Budget expiry only makes sense when phases can advance without human input.
-- **Headless execution requires ralph-tui:** The headless path (claude -p per bead) is a ralph-tui-adjacent pattern, not a replacement.
-
----
+- **Marathon requires all v1.0 phases:** Does not add new phases. Runs same 9 phases but changes chaining (no /clear between planning phases 1-7, single execution run for phase 8). All existing templates reused as-is.
+- **Codemaps requires generation capability:** Either invoke GSD `/gsd:map-codebase` (skill dependency) or build equivalent mapper logic. Recommendation: invoke GSD if installed, fall back to simplified built-in mapper if not.
+- **Marathon enhances codemaps:** Clean lifecycle -- codemap at start, refresh at end. Standard mode has same integration points but across /clear boundaries.
+- **Planning phase collapse conflicts with context isolation:** Fundamental trade-off. 15% context budget constraint means orchestrator must NOT load phase output content -- pass file paths only (existing anti-pattern rule). If maintained, 7 phases of orchestration overhead stays small.
+- **Resume-from-failure critical for marathon:** Standard pipeline usually has < 10 beads. Marathon may have 20-50. Full restart wastes hours. Must read existing result files and skip passed beads.
 
 ## MVP Definition
 
-### Launch With (v1)
+### Launch With (v1.1)
 
-Minimum viable pipeline — what's needed to validate the core concept (context isolation + ralph-tui scale).
+Minimum viable marathon mode + codemaps integration.
 
-- [ ] Plugin structure: skill files + ralph-tools.cjs + templates directory — without this it is not installable
-- [ ] /clear between phases (fresh session per phase) — the core thesis; without this it is just the old ralph-pipeline
-- [ ] ralph-tools.cjs: Node.js CLI for state mutations, config reads, commits, progress tracking — needed by all phases
-- [ ] Disk-persisted state with completed: flags — needed for resumability and /clear handoff
-- [ ] Resumable state: read state.md on invocation, offer resume or restart — table stakes
-- [ ] Phase-based execution: pre-flight, clarify, research, PRD, deepen, resolve, convert, execute, review
-- [ ] Parallel research agents before PRD — differentiator that makes PRD quality worth it
-- [ ] User gates between phases — safety net; enables interruption and steering
-- [ ] Execution gate per phase (manual or headless) — core differentiator; enables overnight mode
-- [ ] Skill chaining: invoke /ralph-tui-prd and /ralph-tui-create-beads as-is — keeps pipeline thin
-- [ ] Open questions resolution gate (blocking before conversion) — prevents ambiguous beads
-- [ ] Compound review after execution (parallel agents) — closes the quality loop
-- [ ] Tracer bullet PRD structure enforcement — vertical slices; prevents horizontal layering
+- [ ] **Marathon command entry point** -- New `--marathon` flag on pipeline invocation activating marathon orchestrator loop. Dep: existing SKILL.md Step 2 command parsing.
+- [ ] **Planning phase chain (no /clear for phases 1-7)** -- Modified Step 7b: if marathon mode, skip /clear and auto-dispatch next planning phase. Dep: existing auto-advance logic.
+- [ ] **Planning review gate after phase 7** -- After convert completes, present bead inventory with approve/abort before execution. Dep: existing gate mechanism (Step 6).
+- [ ] **Time budget scoping** -- In marathon, prompt for budget after planning (before phase 8), not at pipeline start (Step 1b). Dep: existing time-budget commands.
+- [ ] **Resume-from-failure execution** -- Execute phase scans `.claude/pipeline/bead-results/` for passed results, skips those beads. Dep: existing result file format.
+- [ ] **Codemap generation before research** -- Pre-phase step: check `.planning/codebase/`, generate if missing. Dep: mapper agent availability.
+- [ ] **Codemap files in PHASE_FILES** -- Update PHASE_FILES table in SKILL.md for phases 3 (research), 4 (PRD), 9 (review). Dep: existing template variable system.
+- [ ] **Codemap refresh after execution** -- Between phases 8 and 9, re-run codemap generation. Dep: codemap generation capability.
 
-### Add After Validation (v1.x)
+### Add After Validation (v1.1.x)
 
-Features to add once core pipeline is working and validated.
-
-- [ ] Time budget mode — trigger: users request "run X hours overnight" capability
-- [ ] Configurable depth (quick/standard/comprehensive) — trigger: users find default bead count too many or too few
-- [ ] Auto-advance chain (--auto flag) — trigger: users want fully hands-free overnight runs
-- [ ] PRD express path (--prd flag) — trigger: teams with existing spec docs want to skip clarification
-- [ ] Codemap integration as optional context enhancement — trigger: users with large codebases report agent confusion
+- [ ] **Marathon dry-run** -- `--marathon --dry-run` stops after phase 7. Trigger: users want preview.
+- [ ] **Bead queue visualization** -- Table with time estimates at planning review gate. Trigger: "how long?"
+- [ ] **Dependency-aware bead ordering** -- Topological sort from `depends_on`. Trigger: ordering-caused failures.
+- [ ] **Codemap freshness check** -- Warn if codemap older than threshold. Trigger: stale map usage.
+- [ ] **Codemap skip option** -- `--no-codemap` flag. Trigger: small projects where mapping overhead not worth it.
 
 ### Future Consideration (v2+)
 
-Features to defer until product-market fit is established.
-
-- [ ] Learnings harvest (/choo-choo-ralph phase) — defer: harvest skill exists separately; add when core pipeline validated
-- [ ] Wave-based multi-phase batch execution — defer: complex orchestration; validate single-phase flow first
-- [ ] Time budget with phase-count override — defer: niche power-user feature
-
----
+- [ ] **Incremental codemap refresh** -- Re-map only changed files. Defer: requires new mapper agent mode.
+- [ ] **Codemap diff for review** -- Send only changes. Defer: complex diffing, unclear ROI.
+- [ ] **Context budget monitoring** -- Dynamic /clear if context exceeds threshold. Defer: no introspection API.
+- [ ] **Marathon for multi-milestone** -- Chain milestones into single run. Defer: out of scope.
 
 ## Feature Prioritization Matrix
 
 | Feature | User Value | Implementation Cost | Priority |
 |---------|------------|---------------------|----------|
-| /clear between phases | HIGH | HIGH | P1 |
-| Disk-persisted state + resumability | HIGH | MEDIUM | P1 |
-| Phase-based execution (all 9 phases) | HIGH | HIGH | P1 |
-| ralph-tools.cjs (zero-dep CLI) | HIGH | MEDIUM | P1 |
-| Execution gate (headless vs manual) | HIGH | MEDIUM | P1 |
-| Skill chaining (invoke existing skills) | HIGH | LOW | P1 |
-| Parallel research agents | HIGH | MEDIUM | P1 |
-| User gates between phases | HIGH | LOW | P1 |
-| Tracer bullet PRD enforcement | HIGH | MEDIUM | P1 |
-| Open questions resolution gate | MEDIUM | LOW | P1 |
-| Compound review (parallel agents) | HIGH | MEDIUM | P1 |
-| Headless execution (claude -p per bead) | HIGH | MEDIUM | P1 |
-| Pre-flight dependency check | MEDIUM | LOW | P1 |
-| Auto-advance chain (--auto) | HIGH | HIGH | P2 |
-| Time budget mode | MEDIUM | MEDIUM | P2 |
-| Configurable depth | MEDIUM | LOW | P2 |
-| PRD express path (--prd) | MEDIUM | MEDIUM | P2 |
-| Codemap integration | MEDIUM | MEDIUM | P2 |
-| Learnings harvest phase | LOW | MEDIUM | P3 |
+| Marathon command entry point | HIGH | MEDIUM | P1 |
+| Planning phase chain (no /clear) | HIGH | MEDIUM | P1 |
+| Planning review gate | HIGH | LOW | P1 |
+| Time budget scoping | MEDIUM | LOW | P1 |
+| Resume-from-failure execution | HIGH | MEDIUM | P1 |
+| Codemap generation before research | HIGH | MEDIUM | P1 |
+| Codemap files in PHASE_FILES | HIGH | LOW | P1 |
+| Codemap refresh after execution | MEDIUM | MEDIUM | P1 |
+| Marathon dry-run | MEDIUM | LOW | P2 |
+| Bead queue visualization | LOW | LOW | P2 |
+| Dependency-aware bead ordering | MEDIUM | MEDIUM | P2 |
+| Codemap freshness check | LOW | LOW | P2 |
+| Codemap skip option | LOW | LOW | P2 |
+| Incremental codemap refresh | LOW | HIGH | P3 |
+| Codemap diff for review | LOW | HIGH | P3 |
+| Context budget monitoring | LOW | HIGH | P3 |
 
 **Priority key:**
-- P1: Must have for launch
-- P2: Should have, add when possible
-- P3: Nice to have, future consideration
-
----
+- P1: Must have for v1.1 launch
+- P2: Should have, add in v1.1.x patches
+- P3: Nice to have, defer to v2+
 
 ## Competitor Feature Analysis
 
-| Feature | GSD | ralph-pipeline (v1) | ralph-gsd (target) |
-|---------|-----|---------------------|---------------------|
-| Context isolation between phases | Subagent per phase (shared session) | None (single 800-line session) | /clear between phases (true fresh session) |
-| Disk-persisted state | STATE.md + phase files | .claude/pipeline/state.md | .planning/STATE.md (GSD-compatible) |
-| Resumable state | Yes (STATE.md + ROADMAP.md) | Yes (state.md with current_phase) | Yes (state.md + completed: flags) |
-| Parallel agent execution | Yes (wave-based) | Yes (parallel Task calls) | Yes (inherited) |
-| Auto-advance chain | --auto flag + config.json | No | v1.x (P2) |
-| ralph-tui integration | No (uses Task subagents) | Manual/headless gate | Native; execution gate per phase |
-| Execution at scale (60+ beads) | No (bounded by context) | Yes (headless mode) | Yes (core differentiator) |
-| Time budget mode | No | No | v1.x (P2) |
-| Configurable depth | model_profile quality levels | No | v1.x (P2) |
-| Skill chaining | Invokes gsd-agents | Invokes ralph-tui skills | Invokes ralph-tui skills |
-| Compound review | Yes (security/arch/perf/simplicity) | Yes (parallel review agents) | Yes (inherited) |
-| Tracer bullet enforcement | No (plans, not stories) | Yes (PRD structure) | Yes (enforced in PRD phase) |
-| Open questions gate | CONTEXT.md discussion phase | Phase 4.5 (blocking) | Phase 4.5 (blocking) |
-| Learnings harvest | No native | /choo-choo-ralph (Phase 8) | v2+ |
-| Zero-dep CLI tool | gsd-tools.cjs (yes) | No CLI | ralph-tools.cjs (yes) |
-
----
+| Feature | GSD (map-codebase) | SPARC (claude-flow) | Traycer (YOLO Mode) | Gas Town (Polecats) | ralph-pipeline v1.1 |
+|---------|---------------------|---------------------|---------------------|---------------------|---------------------|
+| Upfront planning | /gsd:new-project per-milestone | 5 SPARC phases sequential | Phase planning with smart YOLO | Molecules with acceptance criteria | Marathon: phases 1-7 upfront, then execute |
+| Batch execution | Phase-by-phase with /clear | BatchTool for within-phase ops | Parallel independent items | Polecats from queue, Refinery merges | Sequential from merged queue |
+| Codemap/context | 7-doc `.planning/codebase/` via 4 mappers | Memory Bank hot/cold storage | N/A | Git-backed state | GSD mapper output, selective per phase |
+| Resume after failure | Phase-level via scan-phases | Dependency-tracked tasks | Smart YOLO adapts | Nondeterministic idempotence | Bead-level: skip passed, retry failed |
+| Context sharing | File-based, agents write directly | Memory Bank across sessions | Agent handoff templates | Git-backed shared state | `.planning/codebase/` in PHASE_FILES |
+| Time budgets | No | No | No | No | Yes -- execution only in marathon |
+| Plan-then-execute | No (interleaved) | Yes (SPARC phases) | Yes (Smart YOLO) | No (continuous) | Yes (phases 1-7 plan, 8 execute) |
 
 ## Sources
 
-- GSD (Get Shit Done) GitHub: https://github.com/gsd-build/get-shit-done — Phase structure, auto-advance, disk state patterns — HIGH confidence (primary source)
-- /Users/constantin/.claude/get-shit-done/workflows/execute-phase.md — Wave-based execution, context budget model — HIGH confidence (direct source)
-- /Users/constantin/.claude/get-shit-done/workflows/plan-phase.md — Research → Plan → Verify loop, --auto flag — HIGH confidence (direct source)
-- /Users/constantin/Code/skills/ralph-pipeline/SKILL.md — Existing pipeline phases, state format, skill chaining — HIGH confidence (direct source)
-- Ralph TUI official site: https://ralph-tui.com/ — Execution capabilities, session persistence, beads integration — HIGH confidence
-- Conductors to Orchestrators: The Future of Agentic Coding (O'Reilly): https://www.oreilly.com/radar/conductors-to-orchestrators-the-future-of-agentic-coding/ — Table stakes features, anti-patterns — MEDIUM confidence
-- Addy Osmani: Future of Agentic Coding: https://addyosmani.com/blog/future-agentic-coding/ — Differentiating features, parallelization value — MEDIUM confidence
-- RedMonk: 10 Things Developers Want from Agentic IDEs (2025): https://redmonk.com/kholterhoff/2025/12/22/10-things-developers-want-from-their-agentic-ides-in-2025/ — Developer expectations survey — MEDIUM confidence
-- Cursor Parallel Agents Analysis: https://jduncan.io/blog/2025-11-01-cursor-parallel-agents/ — Parallel vs sequential tradeoffs — MEDIUM confidence
-- AI Coding Agents: Coherence Through Orchestration (Mike Mason, 2026): https://mikemason.ca/writing/ai-coding-agents-jan-2026/ — Anti-patterns, quality concerns — MEDIUM confidence
-- Claude Code Multi-Agent Guide (eesel.ai, 2026): https://www.eesel.ai/blog/claude-code-multiple-agent-systems-complete-2026-guide — Claude Code orchestration patterns — MEDIUM confidence
+- GSD map-codebase workflow -- LOCAL `.reference/get-shit-done/workflows/map-codebase.md` -- HIGH confidence
+- Existing ralph-pipeline templates -- LOCAL `templates/` -- HIGH confidence
+- Existing ralph-pipeline SKILL.md -- LOCAL -- HIGH confidence
+- Context Engineering for Coding Agents (Martin Fowler) -- https://martinfowler.com/articles/exploring-gen-ai/context-engineering-coding-agents.html -- HIGH confidence
+- Windsurf Codemaps (Cognition AI) -- https://cognition.ai/blog/codemaps -- MEDIUM confidence
+- SPARC Automated Development -- https://gist.github.com/ruvnet/e8bb444c6149e6e060a785d1a693a194 -- MEDIUM confidence
+- Traycer YOLO Mode -- https://docs.traycer.ai/tasks/yolo-mode -- MEDIUM confidence
+- Gas Town: Kubernetes for AI Agents -- https://cloudnativenow.com/features/gas-town-what-kubernetes-for-ai-coding-agents-actually-looks-like/ -- MEDIUM confidence
+- Addy Osmani LLM Workflow 2026 -- https://addyosmani.com/blog/ai-coding-workflow/ -- MEDIUM confidence
+- codemap CLI (GitHub) -- https://github.com/JordanCoin/codemap -- MEDIUM confidence
+- Plan-and-Execute Agent Pattern -- https://www.ema.co/additional-blogs/addition-blogs/build-plan-execute-agents -- MEDIUM confidence
+- Planning Mode in AI Coding Assistants -- https://mer.vin/2025/12/planning-mode-in-ai-coding-assistants/ -- MEDIUM confidence
+- Codified Context Infrastructure (arXiv) -- https://arxiv.org/html/2602.20478 -- MEDIUM confidence
+- Codebase Context Specification (GitHub) -- https://github.com/Agentic-Insights/codebase-context-spec -- MEDIUM confidence
 
 ---
-
-*Feature research for: AI coding orchestration pipeline (ralph-gsd)*
-*Researched: 2026-02-25*
+*Feature research for: Marathon mode + codemaps integration (ralph-pipeline v1.1)*
+*Researched: 2026-02-27*

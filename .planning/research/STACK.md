@@ -1,278 +1,428 @@
-# Stack Research
+# Technology Stack: v1.1 Marathon Mode + Codemaps
 
-**Domain:** Claude Code plugin/skill system for multi-phase CLI workflow orchestration
-**Researched:** 2026-02-25
-**Confidence:** HIGH (core patterns verified against official Claude Code docs + live reference implementation)
+**Project:** ralph-pipeline
+**Researched:** 2026-02-27
+**Scope:** Incremental additions for marathon mode and codemaps integration only
+**Confidence:** HIGH (all recommendations use existing v1.0 patterns; no new dependencies)
 
 ---
 
-## Recommended Stack
+## Core Principle: Zero New Dependencies
 
-### Core Technologies
+v1.1 adds features, not technology. The entire v1.0 stack carries forward unchanged:
 
-| Technology | Version | Purpose | Why Recommended |
-|------------|---------|---------|-----------------|
-| Claude Code Skills (SKILL.md) | Current (Agent Skills open standard) | Plugin entry point, slash-command registration, invocation control | Official format. Skills superset `.claude/commands/` — add frontmatter, supporting files, `context: fork`. Verified from official docs. |
-| Node.js (CJS, no npm) | System Node (any v18+) | CLI state management via `ralph-tools.cjs` | gsd-tools.cjs proves the pattern: single `.cjs` entry + `lib/*.cjs` modules, zero npm deps, ships with the skill. `require()` over ESM because bundling/packaging tools work better with CJS. |
-| YAML frontmatter in `.md` files | — | State files (`STATE.md`, phase files) | Established GSD pattern. Parseable with 30-line hand-rolled parser (see `frontmatter.cjs`). Human-readable, git-diff-friendly, no deps. |
-| JSON (config.json) | — | Project config | Machine-written, machine-read, no schema library needed. GSD uses `config.json` for all boolean flags and string templates. |
-| Bash (inline in SKILL.md) | — | CLI invocation, git ops, dependency checks | Used for `node ralph-tools.cjs <cmd>` calls in skill workflows. Avoid complex bash; push logic into `ralph-tools.cjs`. |
+- Node.js CJS, zero npm deps
+- YAML frontmatter + markdown state files
+- JSON config.json for machine state
+- `ralph-tools.cjs` CLI with `lib/*.cjs` modules
+- Templates in `templates/` with `{{VAR}}` substitution
 
-### Supporting Libraries (Zero External Dependencies)
+**Nothing below requires a new library, runtime, or external tool.**
 
-All of these are Node.js built-ins — no `npm install` ever required for `ralph-tools.cjs`:
+---
 
-| Built-in | Purpose | When to Use |
-|----------|---------|-------------|
-| `fs` | File I/O — read/write state, phase, config files | All state operations |
-| `path` | Cross-platform path joining, `--cwd` resolution | Every file operation |
-| `child_process.execSync` | Git commands, shell invocations | `commit`, `git` operations in the CLI |
-| `os` | `os.homedir()` for global config paths | Detecting user-level config/API keys |
-| `process.argv` | CLI arg parsing | Entry point routing |
-| `process.stdout.write` | JSON output or `--raw` scalar output | All output (never `console.log`) |
-| `process.exit` | Exit codes after output | After every command handler |
+## New CLI Commands for ralph-tools.cjs
 
-### Claude Code Skill Frontmatter Fields
+### 1. `codemap` subcommand group
 
-These are the verified frontmatter fields from official docs (as of 2026):
+Purpose: Detect, validate, and provide paths to `.planning/codebase/` files from `/gsd:map-codebase` output.
 
-| Field | Required | Purpose |
-|-------|----------|---------|
-| `name` | No (defaults to dir name) | Slash-command name. Lowercase, hyphens, max 64 chars. |
-| `description` | Recommended | Claude uses this to auto-invoke. Write as trigger phrases: "Use when..." |
-| `disable-model-invocation` | No | `true` = only user can invoke via `/name`. Use for stateful workflows. |
-| `user-invocable` | No | `false` = hidden from `/` menu (Claude-only). Use for background context skills. |
-| `context` | No | `fork` = runs skill in isolated subagent. Skill content becomes the task prompt. |
-| `agent` | No | With `context: fork`, specifies agent type: `Explore`, `Plan`, `general-purpose`, or custom from `.claude/agents/`. |
-| `allowed-tools` | No | Tools Claude can use without approval when skill is active. |
-| `model` | No | Model override when skill is active. |
-| `argument-hint` | No | Autocomplete hint, e.g., `[phase-number]`. |
-| `hooks` | No | Hooks scoped to this skill's lifecycle. |
+| Subcommand | Purpose | Output |
+|------------|---------|--------|
+| `codemap check` | Check if `.planning/codebase/` exists and has expected files | `{ exists: bool, files: string[], stale: bool, age_hours: number }` |
+| `codemap paths` | Return absolute paths for all codemap files suitable for `<files_to_read>` injection | `{ paths: string[] }` or `--raw` returns newline-separated paths |
+| `codemap age` | Check staleness of codemap files (oldest mtime) | `{ age_hours: number, stale: bool }` using 24h threshold |
 
-**String substitutions available in SKILL.md content:**
-- `$ARGUMENTS` — all args passed to the skill
-- `$ARGUMENTS[N]` / `$N` — positional args (0-indexed)
-- `${CLAUDE_SESSION_ID}` — current session ID
+**Implementation location:** New file `lib/codemap.cjs` (~80 lines).
 
-### Skill Directory Structure (Canonical Layout)
+**Why a separate module:** Codemap logic is self-contained (file existence checks, mtime comparison, path listing). Follows the existing pattern where each concern gets its own `lib/*.cjs` file (state.cjs, phase.cjs, time-budget.cjs, etc.).
 
-```
-ralph-gsd/
-├── SKILL.md                    # Entry point, frontmatter, main orchestration instructions
-├── bin/
-│   └── ralph-tools.cjs         # CLI entry point (single file, zero deps, chmod +x)
-│   └── lib/
-│       ├── core.cjs            # Shared: output(), error(), loadConfig(), execGit()
-│       ├── state.cjs           # STATE.md CRUD operations
-│       ├── phase.cjs           # Phase directory operations
-│       ├── config.cjs          # config.json CRUD
-│       ├── frontmatter.cjs     # YAML frontmatter parse/serialize (hand-rolled)
-│       ├── template.cjs        # Template fill operations
-│       └── commands.cjs        # Standalone utility commands
-├── templates/
-│   ├── STATE.md                # STATE.md template
-│   └── phase-file.md           # Phase output file template
-└── references/
-    └── dependencies.md         # Dependency table for pre-flight checks
+**Why NOT inline in orchestrator.cjs:** orchestrator.cjs handles pipeline scanning and template filling. Codemap detection is orthogonal and reusable from both the standard pipeline and marathon mode.
+
+**Staleness detection approach:**
+
+```javascript
+function getCodemapAge(cwd) {
+  const codemapDir = path.join(cwd, '.planning', 'codebase');
+  const expectedFiles = ['STACK.md', 'ARCHITECTURE.md', 'STRUCTURE.md',
+                         'CONVENTIONS.md', 'TESTING.md', 'INTEGRATIONS.md', 'CONCERNS.md'];
+  // Find oldest mtime among existing files
+  // Return { age_hours, stale: age_hours > 24, files_found, files_missing }
+}
 ```
 
-Skill is installed to `~/.claude/skills/ralph-gsd/` or `.claude/skills/ralph-gsd/` (project-local).
+Uses `fs.statSync(file).mtimeMs` -- no external dependencies. The 24-hour staleness threshold is a config-overridable default stored in `config.json` as `codemap_stale_hours` (default: 24).
 
-### State File Formats
+### 2. `marathon` subcommand group
 
-#### STATE.md (YAML frontmatter + markdown body)
+Purpose: Manage marathon mode state -- the merged plan file and execution queue.
 
-```yaml
----
-feature: "user authentication system"
-current_phase: 2
-started: 2026-02-08
-depth: standard
-time_budget_hours: null
-execution_mode: headless
-convert_format: null
-research_agents: [repo-research-analyst, best-practices-researcher]
-review_agents: [security-sentinel, architecture-strategist]
----
+| Subcommand | Purpose | Output |
+|------------|---------|--------|
+| `marathon status` | Check marathon mode state: active, plan exists, queue position | `{ active: bool, plan_exists: bool, total_beads: number, executed: number, remaining: number }` |
+| `marathon activate` | Set marathon mode flag in config | `{ activated: true }` |
+| `marathon deactivate` | Clear marathon mode flag | `{ deactivated: true }` |
 
-## Current Position
-Phase: 2 of 6 (Research)
-...
-```
+**Implementation location:** New file `lib/marathon.cjs` (~60 lines).
 
-The body is human-readable prose. The frontmatter is machine-parsed by `ralph-tools.cjs state json`.
+**Why minimal CLI surface:** Marathon mode is primarily an orchestrator concern (SKILL.md logic). The CLI only needs to track the boolean state and provide status reads. The heavy lifting (plan merging, queue ordering) happens in the skill template, not in ralph-tools.cjs.
 
-#### Phase Output Files
-
-```yaml
----
-phase: 2
-name: research
-completed: true
----
-## Research Summary
-...actual phase output...
-```
-
-GSD uses PLAN.md + SUMMARY.md pairs. ralph-gsd simplifies to single phase files with a `completed` flag.
-
-#### config.json (project-level, no schema library)
+**Config additions for marathon mode:**
 
 ```json
 {
-  "depth": "standard",
-  "execution_mode": "headless",
-  "time_budget_hours": null,
-  "commit_docs": true,
-  "brave_search": false
+  "marathon_active": false,
+  "marathon_plan_path": null,
+  "codemap_stale_hours": 24
 }
 ```
 
-### gsd-tools.cjs Architecture: Key Patterns to Replicate
+Added to the `defaults` object in `core.cjs loadConfig()`.
 
-**1. Dual output modes (JSON vs --raw)**
+### 3. `init marathon` compound command
 
-Every command supports two output modes. Skill workflows use JSON for rich data; bash `$()` captures use `--raw` for scalar values:
+Purpose: Load all context needed for marathon mode entry in one call, parallel to `init pipeline`.
 
 ```bash
-INIT=$(node ralph-tools.cjs state json)
-CURRENT_PHASE=$(node ralph-tools.cjs state get current_phase --raw)
+node ralph-tools.cjs --cwd {PROJECT_CWD} init marathon
 ```
 
-Implementation: `output(result, raw, rawValue)` in `core.cjs`. Always call `process.exit(0)` after `output()`.
+Output JSON includes everything from `init pipeline` plus:
+- `marathon_active` -- from config
+- `codemap_exists` -- from codemap check
+- `codemap_stale` -- from codemap age
+- `codemap_files` -- list of available codemap file paths
+- `bead_format` -- from config (needed upfront since marathon plans the convert step)
 
-**2. Large payload protection (>50KB)**
+**Implementation:** Add `marathon` case to the `init` switch in `ralph-tools.cjs`, calling a new `cmdInitMarathon(cwd, raw)` in `lib/init.cjs`. This function composes existing `loadConfig()`, `checkPreflightCache()`, codemap functions, and adds marathon-specific fields.
 
-Claude Code's Bash tool buffers ~50KB. When JSON payload exceeds this, write to tmpfile and return `@file:/tmp/ralph-xxx.json`. Callers detect the `@file:` prefix and read the file.
+---
 
-```javascript
-if (json.length > 50000) {
-  const tmpPath = path.join(os.tmpdir(), `ralph-${Date.now()}.json`);
-  fs.writeFileSync(tmpPath, json, 'utf-8');
-  process.stdout.write('@file:' + tmpPath);
-} else {
-  process.stdout.write(json);
-}
+## Codemap Integration Points
+
+### What `/gsd:map-codebase` Produces
+
+Seven markdown files in `.planning/codebase/`:
+
+| File | Content | Size (typical) |
+|------|---------|----------------|
+| STACK.md | Languages, runtime, frameworks, deps | 50-100 lines |
+| ARCHITECTURE.md | Layers, data flow, abstractions | 80-200 lines |
+| STRUCTURE.md | Directory layout, key locations | 60-120 lines |
+| CONVENTIONS.md | Code style, naming, patterns | 50-100 lines |
+| TESTING.md | Test framework, structure, coverage | 50-100 lines |
+| INTEGRATIONS.md | External APIs, databases | 40-80 lines |
+| CONCERNS.md | Tech debt, known issues | 40-80 lines |
+
+Total: ~400-800 lines of markdown. Within budget for `<files_to_read>` injection into subagent prompts.
+
+### How Codemaps Are Consumed
+
+Codemaps are **read-only context** for subagents. They are never written to by the pipeline. Consumption is via `<files_to_read>` blocks in templates.
+
+**Which phases consume codemaps:**
+
+| Phase | Why | Which Codemap Files |
+|-------|-----|---------------------|
+| 3 - Research | Agents need existing codebase context to research relevant patterns | STACK.md, ARCHITECTURE.md |
+| 4 - PRD | PRD creation needs architecture understanding for story scoping | ARCHITECTURE.md, STRUCTURE.md, CONVENTIONS.md |
+| 5 - Deepen | Review agents need code patterns to give relevant feedback | All 7 files (parallel agents, each reads all) |
+| 9 - Review | Post-execution review agents need codebase context for architectural judgment | All 7 files |
+
+**Phases that do NOT consume codemaps (and why):**
+
+| Phase | Why Not |
+|-------|---------|
+| 1 - Preflight | Dependency checks, no code understanding needed |
+| 2 - Clarify | User-driven scoping, codemap would add noise |
+| 6 - Resolve | Question resolution against PRD, not codebase |
+| 7 - Convert | Mechanical PRD-to-beads conversion via chained skill |
+| 8 - Execute | Beads execute against the actual code, not against a map |
+
+### Template Variable: `{{CODEMAP_FILES}}`
+
+New template variable. Computed by the orchestrator at dispatch time:
+
+```
+{{CODEMAP_FILES}}
 ```
 
-**3. `--cwd` flag for sandboxed subagents**
+Resolves to a `<files_to_read>` list of codemap paths if they exist, or empty string if not:
 
-Subagents run in different working directories. The CLI must accept `--cwd=<path>` or `--cwd <path>` to resolve file paths relative to the project root.
-
-**4. `init` compound commands**
-
-`init <workflow>` loads all context in a single call, returning a fat JSON object. This replaces 5-10 individual CLI calls at workflow start:
-
-```bash
-INIT=$(node ralph-tools.cjs init start-phase 2)
+```
+- .planning/codebase/STACK.md
+- .planning/codebase/ARCHITECTURE.md
+- .planning/codebase/STRUCTURE.md
+- .planning/codebase/CONVENTIONS.md
+- .planning/codebase/TESTING.md
+- .planning/codebase/INTEGRATIONS.md
+- .planning/codebase/CONCERNS.md
 ```
 
-This is the primary context-loading pattern — one call per workflow start.
+**Why a template variable (not hardcoded paths):** Codemaps are optional. If `.planning/codebase/` does not exist, `{{CODEMAP_FILES}}` resolves to empty. Templates do not need conditional logic.
 
-**5. Hand-rolled YAML frontmatter parser**
+### Codemap Refresh After Execution
 
-No `js-yaml` or `gray-matter`. The parser in `frontmatter.cjs` handles:
-- Simple `key: value`
-- Inline arrays `key: [a, b, c]`
-- Multi-line arrays with `- item`
-- Nested objects (2-3 levels)
+After phase 8 (Execute) completes, the orchestrator should offer to refresh codemaps before phase 9 (Review). This ensures review agents see the codebase as it exists post-execution.
 
-Approximately 200 lines. No YAML library needed.
+**Implementation:** Add a new orchestrator step between phases 8 and 9 in SKILL.md. Not a new CLI command -- the orchestrator invokes `/gsd:map-codebase` as a Task subagent if codemaps are stale.
 
-**6. Stderr for errors, stdout for data**
+Decision: Refresh is opt-in in non-YOLO mode (AskUserQuestion). In YOLO mode, auto-refresh if codemaps are older than the execution phase start time.
 
-```javascript
-function error(message) {
-  process.stderr.write('Error: ' + message + '\n');
-  process.exit(1);
-}
+---
+
+## Marathon Mode Architecture
+
+### What Marathon Mode Is
+
+An alternative to the standard 9-phase sequential pipeline. Instead of plan-execute-gate per phase, marathon mode:
+
+1. Runs phases 1-7 (preflight through convert) in a single planning session
+2. Collects all beads into one merged queue
+3. Executes the entire queue in a single run (phase 8)
+4. Runs review (phase 9) once at the end
+
+**Key difference:** Time budget applies to execution (phase 8) only, not planning phases.
+
+### What Marathon Mode Is NOT
+
+- NOT a new CLI tool
+- NOT a separate SKILL.md
+- NOT parallel execution of planning phases
+- NOT a bypass of any phase content -- all phases still run, just without /clear boundaries during planning
+
+### Marathon Mode Skill Entry
+
+Marathon mode is invoked as an argument to the existing pipeline skill:
+
+```
+/ralph-pipeline --marathon
 ```
 
-Stderr goes to Claude's error display. Stdout is captured by Bash `$()`. Never mix them.
+Or via trigger phrases in a separate SKILL.md (a thin wrapper):
 
-### Markdown Template Generation Patterns
+```yaml
+---
+name: ralph-marathon
+description: "Marathon mode for ralph-pipeline. Plans all phases upfront, merges into one bead queue, executes in single run. Triggers on: ralph marathon, marathon mode, plan all then execute."
+---
+```
 
-GSD uses string interpolation in `template.cjs`, not a template engine. The `template fill` command builds an object, serializes with a hand-rolled YAML serializer (`reconstructFrontmatter(obj)`), then splices into file content with `spliceFrontmatter(content, newObj)`.
+**Recommendation:** Separate SKILL.md file (`MARATHON.md` or similar) that internally dispatches to the same ralph-tools.cjs CLI. This keeps the main SKILL.md focused on the standard 9-phase flow and avoids bloating it with marathon-specific logic.
 
-For ralph-tools.cjs: build object, serialize with hand-rolled YAML serializer, write to disk. No Handlebars, Mustache, or similar needed.
+### Marathon Planning Flow
 
-### Development Tools
+Marathon mode runs phases 1-7 as Task subagents sequentially (no `/clear` between them, no user gates between planning phases). The orchestrator collects all phase outputs and feeds them forward as `PHASE_FILES`:
 
-| Tool | Purpose | Notes |
-|------|---------|-------|
-| Node.js built-in (no test runner) | No formal test suite needed | CLI tools in this class are validated by use in workflows |
-| `chmod +x` | Make CLI executable | Required for direct invocation |
-| `#!/usr/bin/env node` | Shebang | First line of `ralph-tools.cjs` |
+```
+Phase 1 (Preflight) -> Phase 2 (Clarify) -> Phase 3 (Research) -> ...
+     ^                      ^                      ^
+     |                      |                      |
+   Same session          Same session           Same session
+   No /clear             No /clear              No /clear
+```
+
+**Why still sequential (not parallel):** Phases have data dependencies. Phase 3 (Research) needs Phase 2 (Clarify) output. Phase 4 (PRD) needs Phase 3 output. These are inherently sequential.
+
+**Why no user gates during planning:** Marathon mode is for users who trust the pipeline to make reasonable decisions. Gates are deferred to a single review after all planning completes. The user reviews the merged plan before execution starts.
+
+### Marathon State File
+
+Marathon mode writes a single merged plan to:
+
+```
+.planning/pipeline/marathon-plan.md
+```
+
+Format:
+
+```yaml
+---
+marathon: true
+phases_completed: [1, 2, 3, 4, 5, 6, 7]
+total_beads: 12
+bead_format: bd
+created: 2026-02-27T10:00:00Z
+---
+
+## Phase Outputs (Summary)
+
+### Clarify
+{excerpt from clarify.md}
+
+### Research
+{excerpt from research SUMMARY.md}
+
+### PRD
+{excerpt from prd.md}
+
+### Deepen
+{excerpt from deepen.md}
+
+### Resolve
+{excerpt from resolve.md -- auto-resolved or deferred}
+
+### Convert
+{bead count and format}
+
+## Merged Bead Queue
+
+1. {bead-1-name} -- {one-line description}
+2. {bead-2-name} -- {one-line description}
+...
+```
+
+This file serves as the single checkpoint for marathon mode. If the session crashes during planning, the orchestrator can detect which phases completed and resume.
+
+### Merged Bead Queue Management
+
+The merged bead queue is NOT a new data structure in ralph-tools.cjs. It is the same `.beads/` directory produced by the Convert phase. Marathon mode simply:
+
+1. Runs Convert (phase 7) which produces `.beads/*.md`
+2. Lists beads with `ls .beads/*.md | sort`
+3. Executes them sequentially (same as standard mode phase 8)
+
+**No new queue data structure needed.** The existing bead execution machinery in `templates/execute.md` handles everything.
+
+The marathon-plan.md file is a human-readable summary only. It is NOT the execution queue. The queue is the `.beads/` directory.
+
+---
+
+## Config Additions
+
+New fields in `.planning/config.json` (added to `loadConfig()` defaults in core.cjs):
+
+| Key | Type | Default | Purpose |
+|-----|------|---------|---------|
+| `marathon_active` | boolean | `false` | Whether marathon mode is currently running |
+| `marathon_plan_path` | string/null | `null` | Path to marathon-plan.md (for resumability) |
+| `codemap_stale_hours` | number | `24` | Hours before codemaps are considered stale |
+
+**Total additions to core.cjs defaults:** 3 keys. Minimal footprint.
+
+---
+
+## File Changes Summary
+
+### New Files
+
+| File | Lines (est.) | Purpose |
+|------|-------------|---------|
+| `lib/codemap.cjs` | ~80 | Codemap detection, staleness, path listing |
+| `lib/marathon.cjs` | ~60 | Marathon mode state management |
+| `templates/marathon.md` | ~200 | Marathon orchestration template |
+| `MARATHON.md` (or section in SKILL.md) | ~150 | Marathon mode entry point skill |
+
+### Modified Files
+
+| File | Change | Lines Added (est.) |
+|------|--------|-------------------|
+| `ralph-tools.cjs` | Add `codemap` and `marathon` command routing | ~30 |
+| `lib/core.cjs` | Add 3 config defaults | ~3 |
+| `lib/init.cjs` | Add `cmdInitMarathon()` | ~40 |
+| `lib/orchestrator.cjs` | Add `{{CODEMAP_FILES}}` to `fillTemplate()` variable computation | ~15 |
+| `SKILL.md` | Add codemap refresh step between phases 8-9, `{{CODEMAP_FILES}}` in PHASE_FILES table | ~20 |
+| `templates/research.md` | Add `{{CODEMAP_FILES}}` to files_to_read | ~2 |
+| `templates/prd.md` | Add `{{CODEMAP_FILES}}` to files_to_read | ~2 |
+| `templates/deepen.md` | Add `{{CODEMAP_FILES}}` to files_to_read | ~2 |
+| `templates/review.md` | Add `{{CODEMAP_FILES}}` to files_to_read | ~2 |
+
+### Files NOT Changed
+
+| File | Why Not |
+|------|---------|
+| `lib/frontmatter.cjs` | No new YAML patterns needed |
+| `lib/state.cjs` | STATE.md format unchanged |
+| `lib/phase.cjs` | Phase completion logic unchanged |
+| `lib/commands.cjs` | Git commit logic unchanged |
+| `lib/preflight.cjs` | No new dependencies to check |
+| `lib/time-budget.cjs` | Time budget logic unchanged (marathon reuses it) |
+| `lib/config.cjs` | Config get/set unchanged (new keys are just defaults in core.cjs) |
+| `templates/preflight.md` | No codemap context needed |
+| `templates/clarify.md` | No codemap context needed |
+| `templates/resolve.md` | No codemap context needed |
+| `templates/convert.md` | No codemap context needed |
+| `templates/execute.md` | No codemap context needed; marathon uses same execution |
 
 ---
 
 ## Alternatives Considered
 
-| Recommended | Alternative | When to Use Alternative |
-|-------------|-------------|-------------------------|
-| Hand-rolled YAML frontmatter parser | `js-yaml` / `gray-matter` | Never — would require npm install, breaking zero-dep constraint |
-| CJS (`.cjs`) | ESM (`.mjs`) | ESM only if targeting Node 22+ with native module support and no bundling concern; CJS simpler for `require()` of lib modules |
-| Single `.cjs` entry + `lib/*.cjs` modules | True single-file | Single-file viable at <500 lines; gsd-tools chose modular for maintainability at ~1500 lines |
-| YAML frontmatter in `.md` | Separate `.json` state files | JSON state files if you need machine-mutation speed; `.md` if humans read the state files |
-| `process.stdout.write` | `console.log` | `console.log` adds trailing newline and interferes with `$()` capture in some shells |
+| Decision | Recommended | Alternative | Why Not Alternative |
+|----------|-------------|-------------|---------------------|
+| Marathon SKILL.md | Separate file | Section in main SKILL.md | Main SKILL.md is already 446 lines; adding marathon branches would make it unreadable. Separate file keeps both focused. |
+| Codemap consumption | Template variable `{{CODEMAP_FILES}}` | Hardcoded paths in templates | Codemaps are optional. Template variable resolves to empty when absent. Hardcoding would cause file-not-found errors. |
+| Marathon planning | Sequential subagents, same session | Parallel subagents | Phase dependencies prevent parallelism (Research needs Clarify, PRD needs Research). Sequential is correct. |
+| Merged bead queue | Use existing `.beads/` directory | New queue data structure in config.json | `.beads/` is the canonical bead store. Adding a parallel queue creates sync problems. Convert phase already orders beads correctly. |
+| Codemap refresh | After phase 8, before phase 9 | Before every phase | Unnecessary context cost. Codemaps change only after execution. Pre-execution, the initial map is sufficient. |
+| Codemap staleness | File mtime check | Git commit hash comparison | Mtime is simpler, sufficient, and does not require git operations. Git hash comparison adds complexity for minimal benefit. |
+| Marathon state | Config flag + marathon-plan.md | New state file format | Config.json already handles boolean flags. A summary markdown file follows the existing phase output pattern. No new state format needed. |
 
 ---
 
-## What NOT to Use
+## What NOT to Add
 
-| Avoid | Why | Use Instead |
-|-------|-----|-------------|
-| Any npm package in ralph-tools.cjs | Breaks zero-dep constraint; skill would require `npm install` before use | Node.js built-ins only |
-| `console.log` in CLI output paths | Adds `\n` to stdout, interferes with `$()` shell capture | `process.stdout.write()` |
-| ESM `import`/`export` syntax | Requires `.mjs` extension or `"type": "module"` in package.json; complicates zero-dep single-file pattern | `require()` / `module.exports` |
-| Template engines (Handlebars, Mustache, ejs) | Unnecessary dep; string interpolation suffices for markdown generation | JS template literals or `reconstructFrontmatter()` |
-| `async/await` for file I/O | Unnecessary complexity in a CLI tool; sync fs ops are fine | `fs.readFileSync`, `fs.writeFileSync` |
-| `yargs` / `commander` for arg parsing | Adds dependency; manual arg parsing pattern is 20 lines and sufficient | `process.argv.slice(2)` + `args.indexOf()` |
-
----
-
-## Stack Patterns by Variant
-
-**If skill is user-invoked only (stateful workflow):**
-- Set `disable-model-invocation: true` in frontmatter
-- Prevents Claude from auto-triggering a pipeline mid-conversation
-
-**If a phase needs context isolation (research, PRD, review):**
-- Use `context: fork` in a sub-skill OR spawn via Task subagent from SKILL.md
-- GSD uses the Task subagent pattern (not `context: fork`) because it passes specific files via the prompt
-
-**If skill ships CLI that does git ops:**
-- Use `execSync` from `child_process` in `core.cjs`
-- Always handle errors: return `{ exitCode, stdout, stderr }` struct, never throw
-
-**If config needs user-level defaults (before project config exists):**
-- Read `~/.ralph-gsd/defaults.json` (parallel to GSD's `~/.gsd/defaults.json`)
-- Merge with hardcoded defaults; project `config.json` overrides both
+| Avoid | Why | Correct Approach |
+|-------|-----|------------------|
+| New npm dependencies | Breaks zero-dep constraint | All features implementable with Node.js builtins |
+| Codemap generation logic in ralph-tools.cjs | `/gsd:map-codebase` already does this; duplicating is wrong | Invoke `/gsd:map-codebase` as a skill/Task subagent |
+| Parallel phase execution in marathon mode | Phases have data dependencies; parallelism would require dependency resolution | Sequential subagents with output forwarding |
+| Interactive gates during marathon planning | Defeats the purpose of marathon mode | Single review gate before execution starts |
+| New bead queue format | `.beads/` directory is the queue | Reuse existing Convert + Execute flow |
+| Codemap content in orchestrator context | Violates the "orchestrator passes paths, never content" rule | Pass codemap paths via `<files_to_read>` in templates |
+| Dedicated codemap MCP server | Over-engineering for file path listing | Simple filesystem checks in `lib/codemap.cjs` |
+| Codemap diffing (detect what changed) | Unnecessary complexity; agents read full codemap each time | Full read each time; 400-800 lines is within budget |
 
 ---
 
-## Version Compatibility
+## Test Coverage Requirements
 
-| Component | Version | Notes |
-|-----------|---------|-------|
-| Node.js | 18+ | Required for `fs.existsSync`, `os.tmpdir()` used throughout; 20+ preferred |
-| Claude Code | Current (Agent Skills open standard) | `context: fork`, `$ARGUMENTS[N]`, `allowed-tools` all require current Claude Code release |
-| ralph-tui skills | As installed via `bunx add-skill subsy/ralph-tui --all` | No version pinning; invoke as-is |
-| gsd-tools.cjs | N/A (reference, not a dependency) | Study the pattern; do not import |
+### New test files needed:
+
+| File | Tests | Priority |
+|------|-------|----------|
+| `tests/codemap.test.cjs` | Check detection, staleness calc, path listing, missing dir handling | HIGH |
+| `tests/marathon.test.cjs` | Activate/deactivate, status with beads, init marathon output | HIGH |
+
+### Existing tests to extend:
+
+| File | Addition |
+|------|----------|
+| `tests/init.test.cjs` | Add `init marathon` test case |
+| `tests/orchestrator.test.cjs` | Add `{{CODEMAP_FILES}}` variable resolution test |
+
+Pattern: Follow existing test patterns in `tests/state.test.cjs` and `tests/phase.test.cjs` -- synchronous Node.js assert-based tests with filesystem mocking via temp directories.
+
+---
+
+## Integration Points with v1.0
+
+| v1.0 Component | How v1.1 Integrates | Coupling |
+|----------------|---------------------|----------|
+| `init pipeline` | `init marathon` extends the same pattern, shares `loadConfig()`, `checkPreflightCache()` | Shared utility functions |
+| `scan-phases` | Marathon mode reuses scan-phases for phase 8/9 completion detection | Direct reuse |
+| `time-budget` | Marathon time-budget starts before phase 8 only (not planning phases) | Direct reuse |
+| `phase-complete` | Called once after marathon phase 9 completes (same as standard flow) | Direct reuse |
+| `config-get/set` | Marathon adds 3 new config keys, uses same get/set commands | Direct reuse |
+| `fillTemplate()` | Extended with `{{CODEMAP_FILES}}` variable | Backward compatible (new variable, existing templates unaffected until updated) |
+| Template `<files_to_read>` | Codemap paths appended to existing `{{PHASE_FILES}}` block | Additive only |
+| Execute template | Marathon dispatches identical execute template with same bead execution | Unchanged |
+| Review template | Marathon dispatches identical review template | Unchanged (gains codemap context) |
 
 ---
 
 ## Sources
 
-- `https://code.claude.com/docs/en/skills` — Official Claude Code skills documentation. Verified: SKILL.md format, all frontmatter fields, string substitutions, `context: fork`, `agent`, `allowed-tools`, `disable-model-invocation`, `user-invocable`, `$ARGUMENTS[N]`. **Confidence: HIGH**
-- `/Users/constantin/.claude/get-shit-done/bin/gsd-tools.cjs` — Live reference implementation. Verified: CLI router pattern, `--cwd` flag, dual output modes, `@file:` tmpfile fallback, `init` compound commands. **Confidence: HIGH**
-- `/Users/constantin/.claude/get-shit-done/bin/lib/core.cjs` — Verified: `output()`, `error()`, `loadConfig()`, `execGit()`, `MODEL_PROFILES`, 50KB buffer guard. **Confidence: HIGH**
-- `/Users/constantin/.claude/get-shit-done/bin/lib/frontmatter.cjs` — Verified: hand-rolled YAML frontmatter parser/serializer pattern (~300 lines, zero deps). **Confidence: HIGH**
-- `/Users/constantin/Code/skills/ralph-pipeline/SKILL.md` — Existing skill format: frontmatter fields, state.md YAML format, phase file format, subagent dispatch pattern. **Confidence: HIGH**
-- `https://mikhail.io/2025/10/claude-code-skills/` — Structural patterns for Claude Code skills. Confirms: CLI invocation via markdown instructions, state management via disk files. **Confidence: MEDIUM** (secondary source, consistent with official docs)
-- Node.js v25 docs (`https://nodejs.org/api/modules.html`) — CJS `require()` still fully supported. **Confidence: HIGH**
+- `/Users/constantin/Code/skills/ralph-pipeline/ralph-tools.cjs` -- Existing CLI entry point, command routing pattern. **Confidence: HIGH** (primary source, verified by reading code)
+- `/Users/constantin/Code/skills/ralph-pipeline/lib/core.cjs` -- Config defaults, loadConfig(), output patterns. **Confidence: HIGH**
+- `/Users/constantin/Code/skills/ralph-pipeline/lib/init.cjs` -- Compound init pattern for cmdInitPipeline(). **Confidence: HIGH**
+- `/Users/constantin/Code/skills/ralph-pipeline/lib/orchestrator.cjs` -- fillTemplate(), PIPELINE_PHASES, scanPipelinePhases(). **Confidence: HIGH**
+- `/Users/constantin/Code/skills/ralph-pipeline/SKILL.md` -- Orchestrator logic, template dispatch, PHASE_FILES table. **Confidence: HIGH**
+- `/Users/constantin/Code/skills/ralph-pipeline/.reference/get-shit-done/workflows/map-codebase.md` -- /gsd:map-codebase output format: 7 files in .planning/codebase/. **Confidence: HIGH**
+- `/Users/constantin/Code/skills/ralph-pipeline/.planning/codebase/*.md` -- Actual codemap output format and content. **Confidence: HIGH**
+- `/Users/constantin/Code/skills/ralph-pipeline/.planning/PROJECT.md` -- v1.1 requirements: marathon mode + codemaps. **Confidence: HIGH**
 
 ---
 
-*Stack research for: ralph-gsd Claude Code plugin system*
-*Researched: 2026-02-25*
+*Stack research for: ralph-pipeline v1.1 Marathon Mode + Codemaps*
+*Researched: 2026-02-27*

@@ -1,204 +1,210 @@
 # Project Research Summary
 
-**Project:** ralph-gsd — Claude Code skill for multi-phase AI coding orchestration
-**Domain:** Claude Code plugin / skill system with context-isolated pipeline execution
-**Researched:** 2026-02-25
+**Project:** ralph-pipeline v1.1 — Marathon Mode + Codemaps Integration
+**Domain:** AI coding pipeline orchestrator — incremental extension of existing 9-phase skill
+**Researched:** 2026-02-27
 **Confidence:** HIGH
 
 ## Executive Summary
 
-ralph-gsd is a Claude Code skill that orchestrates a 9-phase idea-to-shipped-code pipeline. The defining architectural thesis is context isolation: each phase runs in a fresh Claude Code session (separated by `/clear`), preventing the context rot that degrades quality in single-session pipelines. The recommended approach is a thin SKILL.md orchestrator that does no phase work itself — it reads disk state, dispatches Task subagents, verifies completion flags, and advances state. A zero-dependency Node.js CLI (`ralph-tools.cjs`, mirroring `gsd-tools.cjs`) handles all state mutations, config reads, and git commits. All cross-session state lives on disk in `.planning/` — the only persistence medium that survives `/clear`.
+ralph-pipeline v1.1 is a targeted extension of a working v1.0 pipeline orchestrator. The two additions — marathon mode and codemaps integration — are architecturally orthogonal and can be built independently. Codemaps integration has no dependency on marathon mode but marathon mode depends on codemaps; build codemaps first. The entire v1.0 stack carries forward unchanged: zero new npm dependencies, Node.js CJS only, YAML frontmatter state files, and the existing `ralph-tools.cjs` CLI extended with two new `lib/*.cjs` modules. All 9 existing templates are reused by marathon mode without modification; only the orchestrator chaining logic in SKILL.md changes.
 
-The product differentiates from both GSD (which uses subagents within a shared session) and the existing ralph-pipeline (which runs all 9 phases in one 800-line session) by enforcing genuine context isolation and natively integrating ralph-tui as the execution engine. This combination enables overnight runs of 60+ beads: each bead receives a fresh 200k context window via `claude -p`, results are written to disk, and the next session reconstructs full context from disk state. The core stack is established and well-sourced: Claude Code Agent Skills (SKILL.md format), Node.js 18+ CJS (zero npm deps), YAML frontmatter in `.md` files for human-readable state, and `config.json` for machine-read configuration.
+The recommended approach treats marathon mode as an alternative orchestration path via a `mode: marathon` config flag in the existing SKILL.md, not as a separate skill or orchestrator. The counterintuitive insight from research is that "one continuous marathon run" still uses `/clear` between planning phases to preserve context isolation — the only differences from standard auto-advance are: auto-approved user gates during planning phases 2-7, time budget deferred to execution phase entry, and a codemap lifecycle (generate at planning start, refresh at execution end). The `.beads/` directory produced by the existing Convert phase is the marathon execution queue; no new queue data structure is needed.
 
-The primary risks cluster around state management and the `/clear` boundary assumption. Any implementation that relies on in-memory state crossing phase boundaries will fail silently. The fat orchestrator anti-pattern (orchestrator reads phase file contents instead of only checking completion flags) is the highest-probability failure mode and must be addressed in the first implementation phase. Pre-flight validation of chained skills (`/ralph-tui-prd`, `/ralph-tui-create-beads`) must be blocking — not advisory — because silent skill invocation failures produce `completed: true` with empty output that corrupts all downstream phases.
+The primary implementation risk is context budget violation in two specific forms: loading codemap content into subagent prompts instead of passing file paths (bloats orchestrator when filling templates), and loading phase plan content into the marathon orchestrator itself. Both are completely avoidable by maintaining the existing architecture's core invariant: the orchestrator passes file paths only, never content. A selective `{{CODEMAP_FILES}}` template variable (analogous to the existing `{{PHASE_FILES}}`) handles codemap injection per agent role without touching orchestrator context.
+
+---
 
 ## Key Findings
 
 ### Recommended Stack
 
-The stack is fully determined by a live reference implementation (`gsd-tools.cjs`) and official Claude Code skills documentation. No exploratory decisions are needed. Claude Code Agent Skills (SKILL.md frontmatter with `disable-model-invocation: true`, `context: fork` for subagent phases) provide the plugin entry point. A single `.cjs` file with `lib/*.cjs` modules and zero npm dependencies is mandatory — the skill must be installable without `npm install`. YAML frontmatter is parsed by a hand-rolled ~200-line parser (no `js-yaml` or `gray-matter`). All output goes through `process.stdout.write` (never `console.log`) with dual modes: JSON for skill workflows, `--raw` scalars for bash `$()` captures.
+v1.1 adds zero new dependencies. All new functionality is implemented in two new `lib/*.cjs` modules (`lib/codemap.cjs` ~80 lines for codemap detection/staleness/path-listing, `lib/marathon.cjs` ~60-180 lines for marathon state management), one new template (`templates/codemap.md` ~120 lines with 4 parallel mapper agents), and targeted additions to five existing files. Four existing templates gain `{{CODEMAP_FILES}}` variable injection (research.md, prd.md, deepen.md, review.md). The existing execute.md template is entirely unchanged — marathon dispatches it identically to standard mode.
 
-**Core technologies:**
-- Claude Code Skills (SKILL.md): Plugin entry point, slash-command registration — official format, verified against docs
-- Node.js 18+ CJS (`ralph-tools.cjs`): Zero-dep CLI for all state mutations — mirrors `gsd-tools.cjs` exactly; `require()` over ESM for simplicity
-- YAML frontmatter in `.md` files: Cross-session state storage — human-readable, git-diff-friendly, no deps
-- `config.json`: Machine-written project config — `depth`, `execution_mode`, `auto_advance`, `time_budget_expires`
-- Hand-rolled YAML frontmatter parser: ~200 lines, handles `key: value`, inline arrays, multi-line arrays — no npm required
-- Node.js built-ins only: `fs`, `path`, `child_process`, `os`, `process.argv`, `process.stdout.write`
+**Core technologies (all existing, no new additions):**
+- Node.js CJS + `lib/*.cjs` modules — new modules follow the exact pattern of existing `lib/phase.cjs`, `lib/state.cjs`, `lib/time-budget.cjs`
+- `fs.statSync().mtimeMs` — codemap staleness detection, 24h default threshold configurable via `codemap_stale_hours` in config.json
+- `.beads/*.md` directory — existing bead store is the marathon execution queue; no new queue data format
+- YAML frontmatter + markdown — marathon state in `.planning/marathon/status.json` and `queue.json`; codemaps in `.planning/codebase/`
+- `{{CODEMAP_FILES}}` template variable — new variable computed by `fillTemplate()` in `lib/orchestrator.cjs`, resolves to file path list or empty string when absent
+
+**New config keys added to `loadConfig()` defaults in `lib/core.cjs`:**
+- `pipeline_mode: 'standard'` — `'standard' | 'marathon'`
+- `codemap_enabled: null` — `null` (auto-detect) | `true` | `false`
+- `codemap_stale_hours: 24` — staleness threshold in hours
+- `codemap_refreshed_at: null` — ISO8601 timestamp of last refresh
 
 ### Expected Features
 
-The feature set is well-defined with clear P1/P2/P3 prioritization. The MVP (v1) must prove the context isolation thesis and the ralph-tui scale advantage. Everything else is v1.x or v2+.
+**Must have (table stakes — v1.1 launch, all P1):**
+- Marathon command entry point (`--marathon` flag or direct `mode: marathon` config)
+- Planning phase chain with auto-approved gates between phases 2-7 (no user interruption during planning)
+- Planning review gate after phase 7 Convert (user approves bead inventory before execution starts)
+- Time budget deferred to execution start, not pipeline invocation
+- Resume-from-failure execution (scan `.claude/pipeline/bead-results/` for passed beads, skip them on re-run)
+- Codemap generation before research phase (4 parallel mapper agents writing 7 files to `.planning/codebase/`)
+- Selective codemap files per agent role via `{{CODEMAP_FILES}}` (research gets STACK + ARCHITECTURE; review gets post-exec codemap)
+- Codemap refresh after execution before review (scoped: arch + concerns mappers only)
 
-**Must have (table stakes):**
-- Resumable state — disk-persisted `STATE.md` with `current_phase`, `completed_phases[]`; survive `/clear` and compaction
-- Phase-based execution — 9 phases with defined inputs/outputs and `completed: true/false` flags on every phase file
-- Dependency pre-flight — blocking gate: missing skill or CLI stops pipeline at Phase 0, not Phase 3
-- Git integration — auto-init, per-task commits via `ralph-tools.cjs commit`
-- Parallel research agents — `repo-research-analyst`, `best-practices-researcher`, `framework-docs-researcher` in parallel
-- User gates between phases — `AskUserQuestion` in orchestrator (not in subagents); bypassed by `auto_advance`
-- Quality gate enforcement — acceptance criteria baked into bead PRD; verified before commit
-- Skill chaining — invoke `/ralph-tui-prd` and `/ralph-tui-create-beads` as-is; never reimplement
-- Open questions resolution gate — Phase 4.5 blocks conversion; TBD/placeholder scan on PRD required
-- Compound review — parallel security/architecture/performance/simplicity agents after execution
-- Tracer bullet PRD enforcement — US-001 must include full-stack verification; horizontal-only slice is rejected
-- `/clear` between phases — the core thesis; fresh 200k context per phase
-
-**Should have (competitive):**
-- Headless execution gate (manual vs `claude -p` per bead) — enables overnight mode; per-phase choice
-- Auto-advance chain (`--auto` flag) — hands-free pipeline; requires quality gates to be trustworthy first
-- Time budget mode — `time_budget_expires` in config; stops chain cleanly after budget expires
-- Configurable depth (`quick/standard/comprehensive`) — controls bead count heuristics
-- PRD express path (`--prd` flag) — skip clarification for teams with existing specs
+**Should have (v1.1.x):**
+- Marathon dry-run mode (`--dry-run` stops after phase 7, shows bead inventory without executing)
+- Bead queue visualization with time estimates at planning review gate
+- Codemap freshness warning and `--no-codemap` skip option
+- Dependency-aware bead ordering (topological sort from `depends_on` frontmatter field)
 
 **Defer (v2+):**
-- Learnings harvest (`/choo-choo-ralph`) — separate skill exists; add after core pipeline validated
-- Wave-based multi-phase batch execution — validate single-phase flow before batching
-- Codemap integration — optional context enhancement; not core to pipeline value
+- Incremental codemap refresh (re-map only changed files — requires new mapper agent mode)
+- Codemap diff for review agents (send only changed sections — complex diffing, unclear ROI)
+- Context budget monitoring with dynamic `/clear` — no introspection API available
+- Marathon for multi-milestone chaining — out of scope for v1.1
 
 ### Architecture Approach
 
-The architecture is a thin orchestrator + phase subagents pattern, with disk as the sole persistence layer across `/clear` boundaries. SKILL.md does no phase work — it reads `STATE.md`, dispatches a Task subagent for the current phase, verifies `completed: true` in the output file, advances state via `ralph-tools.cjs`, then runs the gate or auto-advances. Subagents receive only the specific files they need (paths, not contents) and write structured output to `.planning/phases/{N}-{slug}/`. The build order is strict: `ralph-tools.cjs` must exist before SKILL.md is written, because the CLI is the foundation every subsequent component depends on.
+Marathon mode and codemaps are layered onto the existing v1.0 architecture without altering its fundamental data flow. SKILL.md gains a `--marathon` detection step (Step 2c) and a Marathon Orchestrator section (~120 lines) that dispatches the same 9 phase templates with different gate behavior. Codemaps are handled via a new `templates/codemap.md` dispatched as a Task subagent before phase 3; the template inlines the GSD map-codebase logic (4 parallel mapper agents) because Task subagents cannot invoke the Skill tool. Templates self-detect codemap availability via `ls .planning/codebase/*.md` rather than receiving hardcoded paths from the orchestrator, keeping the orchestrator mode-agnostic. The existing `scan-phases`, `phase-complete`, and `time-budget` commands are reused without modification.
 
 **Major components:**
-1. SKILL.md (Orchestrator) — phase sequencing, gate logic, subagent dispatch, auto-advance chain; stays under 15% context budget
-2. `ralph-tools.cjs` (CLI) — all state mutations, config reads, git commits, progress tracking; single `.cjs`, zero npm deps
-3. `.planning/` (Disk State) — `STATE.md`, `config.json`, `phases/{N}-{slug}/` output files; everything that must survive `/clear`
-4. Task subagents (Phase Workers) — fresh 200k context per phase; research, PRD creation, review; read files via paths
-5. ralph-tui (Executor) — external black box; invoked as `ralph-tui run` or `claude -p` per bead in headless mode
-6. Chained skills (`/ralph-tui-prd`, `/ralph-tui-create-beads`) — maintained externally; invoked as-is from phase subagents
+1. `SKILL.md` (modified) — adds Step 2c marathon detection, Step 4b codemap dispatch between clarify/research, Marathon Orchestrator section; estimated +120-150 lines
+2. `templates/codemap.md` (new) — 4 parallel mapper Task subagents writing 7 documents to `.planning/codebase/`; handles freshness check internally; ~120 lines
+3. `lib/marathon.cjs` (new) — CLI commands: `init` (creates `.planning/marathon/status.json`), `merge-queue` (reads `.beads/*.md`, writes `queue.json`), `status`; ~60-180 lines
+4. `lib/codemap.cjs` (new) — `check`, `paths`, `age` commands; file mtime staleness detection; ~80 lines
+5. `lib/orchestrator.cjs` (modified) — adds `{{CODEMAP_FILES}}` variable with per-phase selective injection table in `fillTemplate()`; ~+15 lines
+
+**Files unchanged by v1.1 (critical to confirm during implementation):** `lib/frontmatter.cjs`, `lib/state.cjs`, `lib/phase.cjs`, `lib/commands.cjs`, `lib/preflight.cjs`, `lib/time-budget.cjs`, `lib/config.cjs`, and `templates/execute.md`.
 
 ### Critical Pitfalls
 
-1. **Fat orchestrator (context bloat)** — orchestrator must NEVER read phase file contents; only verify `completed: true` via `ralph-tools.cjs`; pass file paths to subagents. Enforce from Phase 1 of implementation or every subsequent phase will compound the problem.
+1. **Marathon orchestrator context overflow** — The orchestrator must never load phase output content during marathon planning. Pass file paths only (same as standard mode). Marathon planning still uses `/clear` between phases; auto-approval of gates is the only behavioral difference. Warning sign: orchestrator context exceeding 20% during marathon planning, or compaction triggered during orchestration (not during subagent work).
 
-2. **State file ambiguity** — phase file `completed: true` must gate `STATE.md` advancement, not precede it. Protocol: subagent writes file with `completed: false` then does work then sets `completed: true` then orchestrator advances state. If `completed: false` is found at session start, offer re-run, not auto-advance.
+2. **Codemap staleness in long marathon execution** — A 20-40 bead marathon runs 4-8 hours. The pre-execution codemap becomes wrong for post-execution review. Solution: two codemap snapshots — `.planning/codebase/` (pre-exec) and `.planning/codebase-post-exec/` (post-exec). Post-exec refresh is scoped to arch + concerns mappers only (ARCHITECTURE.md, STRUCTURE.md, CONCERNS.md change most during execution; STACK.md and CONVENTIONS.md rarely do).
 
-3. **Compaction drops the thread** — every phase invocation must be self-contained; read all state from disk at start via `ralph-tools.cjs init`. The `init` command returning structured JSON replaces fragile hook injection as the primary context-load mechanism.
+3. **Codemap token budget explosion** — 7 codemap files for a production codebase reach 3000-5000 lines (15K-25K tokens). Passing all 7 to every agent across 4 parallel agents x 3 phases = up to 12 agent instances with unnecessary content. Solution: selective injection per agent role via `{{CODEMAP_FILES}}` template variable, passing file paths (not content) for only the relevant documents.
 
-4. **Skill invocation without output validation** — pre-flight is a blocking gate; each skill invocation in a subagent prompt must be followed by structural validation (e.g., PRD contains `[PRD]...[/PRD]` markers and at least 3 user stories). Missing skill = pipeline stops with clear error, not `completed: true` with empty file.
+4. **Time budget semantics collision** — `cmdTimeBudgetCheck` in `lib/time-budget.cjs` stores an absolute expiry timestamp with no scope field. If `time-budget start` is called at marathon invocation, planning phases get stopped by a budget meant only for execution. Solution: defer `time-budget start` until execute phase entry in marathon mode. Zero changes to `lib/time-budget.cjs` required.
 
-5. **Open questions leaking to execution** — Phase 4.5 must run a grep scan for `[TBD]`, `[TODO]`, `TBD:`, `[PLACEHOLDER]` patterns before setting `open_questions_resolved: true`. Vague answers that satisfy the checklist but leave placeholders in the PRD will corrupt bead execution.
+5. **Separate marathon orchestrator or SKILL.md entry point** — Creating a parallel orchestrator duplicates logic, causes drift, and confuses users. Marathon is `mode: marathon` in config, handled by conditionals in the existing SKILL.md. The SessionStart hook reads `mode` from config and adjusts gate behavior.
+
+---
 
 ## Implications for Roadmap
 
-Based on the component dependency graph from ARCHITECTURE.md and the pitfall-to-phase mapping from PITFALLS.md, the build order is clear. The CLI must precede the orchestrator, the state schema must precede the phase prompts, and auto-advance must layer on after basic sequencing is verified.
+The build order is two sequential implementation phases with a final integration testing phase. Codemaps must precede marathon. All three phases involve only SKILL.md modifications plus small new/modified CJS files — no architectural breaks.
 
-### Phase 1: Foundation — CLI and State Schema
+### Phase 1: Codemaps Foundation
+**Rationale:** Codemaps integration has no dependency on marathon mode, but marathon mode's start/end codemap lifecycle depends on codemaps working correctly. Building it first makes it independently useful in standard mode immediately. All design decisions are fully resolved in research; no ambiguity remains.
 
-**Rationale:** Everything depends on `ralph-tools.cjs` and a stable `.planning/` schema. Pitfalls 1, 2, 3, and 7 are all Phase 1 concerns — getting the state machine right before any phase work is built is non-negotiable. This is the highest-risk phase because a wrong state schema requires rewriting all subsequent phases.
+**Delivers:**
+- `templates/codemap.md` — 4 parallel mapper agents, freshness check, 7-file output
+- `lib/codemap.cjs` — `check`, `paths`, `age` commands; mtime staleness detection
+- `lib/core.cjs` — `codemap_enabled`, `codemap_refreshed_at`, `codemap_stale_hours` config defaults
+- `lib/orchestrator.cjs` — `{{CODEMAP_FILES}}` variable with per-phase selective injection table
+- `templates/research.md` — Step 1.5: conditional codemap injection per agent role
+- `templates/prd.md` — conditional codemap injection (ARCHITECTURE + STRUCTURE)
+- `templates/deepen.md` — conditional codemap injection (role-specific per agent)
+- `templates/review.md` — Step 3.5: conditional codemap injection (post-exec path)
+- `SKILL.md` — Step 4b: codemap dispatch between clarify and research
+- `tests/codemap.test.cjs` — check detection, staleness calc, path listing, missing dir handling
 
-**Delivers:** `ralph-tools.cjs` with `init`, `state`, `config-get`, `config-set`, `commit`, `phase-complete` commands; `STATE.md` schema; `config.json` schema; `.planning/` directory layout; disk-mediated `/clear` recovery verified end-to-end.
+**Avoids:** Pitfalls 3 (token budget explosion) and 2 (staleness — two-snapshot approach designed in from the start)
 
-**Addresses:** Resumable state, disk-persisted phase outputs, git integration, pre-flight skeleton.
+### Phase 2: Marathon Mode Orchestration
+**Rationale:** Depends on Phase 1 (codemaps must work for marathon's generate-at-start and refresh-at-end lifecycle). All 9 existing templates are reused unchanged — only the orchestrator chaining and new CLI module are the implementation surface. Marathon is auto-advance + auto-approved planning gates + deferred time budget; no new templates, no new execution logic.
 
-**Avoids:** Fat orchestrator (CLI mediates all state reads), state file ambiguity (completion-before-advancement protocol), compaction recovery (self-contained init from disk).
+**Delivers:**
+- `lib/marathon.cjs` — `init`, `merge-queue`, `status` CLI commands; `.planning/marathon/` directory management
+- `ralph-tools.cjs` — marathon command routing in main switch
+- `lib/core.cjs` — `pipeline_mode` config default
+- `lib/init.cjs` — `cmdInitMarathon()` function composing existing utilities + marathon fields
+- `SKILL.md` — Step 2c (marathon detection) + Marathon Orchestrator section (~120 lines)
+- Time budget deferral to execute phase entry in marathon orchestrator
+- Planning review gate after Convert (bead inventory approval before execution)
+- Progress logging during marathon planning (phase transition messages)
+- `tests/marathon.test.cjs` — activate/deactivate, status with beads, init marathon output
+- `tests/init.test.cjs` extended — `init marathon` test case
+- `tests/orchestrator.test.cjs` extended — `{{CODEMAP_FILES}}` resolution test
 
-**Research flag:** Standard patterns — `gsd-tools.cjs` is the reference implementation. No additional research needed.
+**Avoids:** Pitfalls 1 (orchestrator context), 4 (time budget semantics), 5 (separate orchestrator), and UX pitfall of no progress visibility
 
-### Phase 2: Orchestrator Shell and Phase Execution Pattern
+### Phase 3: Integration Testing and Hardening
+**Rationale:** The marathon + codemaps interaction surface has multiple failure modes that only surface end-to-end. The "Looks Done But Isn't" checklist from PITFALLS.md has 10 specific verification points requiring full pipeline runs.
 
-**Rationale:** Once the CLI exists, the SKILL.md shell (phase sequencing, gate logic, state read/advance) can be built. This phase implements the completion-flag verification pattern and the subagent dispatch model — establishing the template that all 9 phases will follow.
-
-**Delivers:** SKILL.md entry point with compaction-recovery logic; phase dispatch template (read -> dispatch Task -> verify -> advance -> gate); 2-phase end-to-end test (research -> PRD) with `/clear` boundary crossing verified; `phase-validate` command in `ralph-tools.cjs` for structural content checks.
-
-**Addresses:** Phase-based execution, user gates between phases, `/clear` between phases (core thesis).
-
-**Avoids:** State in orchestrator memory (Task dispatch with paths only), gate logic inside subagents (all gates in orchestrator), one-long-session anti-pattern.
-
-**Research flag:** Standard patterns — GSD `execute-phase.md` and `discuss-phase.md` are the reference. No additional research needed.
-
-### Phase 3: Phase Content — Research, PRD, Resolution Gate
-
-**Rationale:** With the orchestrator shell working, phase-specific subagent prompts can be written. Research and PRD are the highest-value phases and the most complex to get right (tracer bullet enforcement, TBD scan). The open questions resolution gate (Phase 4.5) belongs here because it is tightly coupled to PRD quality.
-
-**Delivers:** Research phase subagent (parallel agents, capped output per agent); PRD phase subagent (invokes `/ralph-tui-prd`, validates `[PRD]...[/PRD]` markers, enforces tracer bullet US-001); Phase 4.5 resolution gate with TBD placeholder scan; `scan-placeholders` command in `ralph-tools.cjs`.
-
-**Addresses:** Parallel research agents, tracer bullet PRD enforcement, open questions resolution gate, skill chaining (first external skill invocation).
-
-**Avoids:** Open questions leaking to execution (TBD scan), tracer bullet degrading to horizontal layering (US-001 validator), skill invocation without output validation (PRD marker check).
-
-**Research flag:** Verify `/ralph-tui-prd` output format against live skill before writing PRD validation logic. One-time check during planning.
-
-### Phase 4: Execution Layer — Headless and Review
-
-**Rationale:** Bead conversion and execution are the technically novel parts of ralph-gsd vs GSD. The headless execution pattern (one `claude -p` process per bead) and the bead-results status convention must be defined before implementation to avoid the "wakes up to unreadable pile of result files" pitfall. Compound review closes the quality loop.
-
-**Delivers:** Convert phase subagent (invokes `/ralph-tui-create-beads`, validates `.beads/*.md` output); headless execution script generation (references/headless-script.md template); bead-results status convention (`status: passed|failed|blocked` first line); `summarize-bead-results` command in `ralph-tools.cjs`; compound review phase (parallel security/architecture/performance/simplicity agents).
-
-**Addresses:** Headless execution gate, ralph-tui as execution engine, compound review after execution, quality gate enforcement.
-
-**Avoids:** Headless execution without exit codes (bead-results format defined upfront), parallel beads sharing git working tree (sequential execution or disjoint file guarantee).
-
-**Research flag:** Verify current `claude -p` CLI flags (`--max-turns`, `--allowedTools` syntax) before writing headless execution script template.
-
-### Phase 5: Advanced Features — Auto-Advance, Time Budget, Depth
-
-**Rationale:** Layer advanced features on after core pipeline is verified end-to-end. Auto-advance without working gates is dangerous; this phase is gated on Phases 2-4 being stable. Time budget and configurable depth are independent additions.
-
-**Delivers:** Auto-advance chain (`--auto` flag, `workflow.auto_advance` config); time budget mode (`time_budget_expires` in config, budget check in `ralph-tools.cjs`); configurable depth (`quick/standard/comprehensive` controlling bead count heuristics); PRD express path (`--prd` flag bypassing clarification phase).
-
-**Addresses:** Auto-advance chain, time budget mode, configurable depth, PRD express path.
-
-**Avoids:** Auto-advance without quality gates (Phases 2-4 must be complete and verified first).
-
-**Research flag:** Standard patterns — GSD `--auto` flag implementation is the reference. No additional research needed.
+**Delivers verified behavior for:**
+- Standard mode + codemaps: codemap auto-detection, selective injection per agent role confirmed
+- Marathon mode end-to-end: phases 1-7 planning (no user gates), merge queue, execute, review
+- Marathon + codemap refresh: `.planning/codebase-post-exec/` exists, review agents receive post-exec path
+- Time budget in marathon: `time_budget_expires` not set until execute phase begins
+- Resume after interrupt: passed beads skipped on re-invocation
+- Config cleanup: `mode` resets to `normal` after marathon completion or failure
+- Codemap skip for greenfield: no source files = codemap generation skipped with log
+- Marathon fail-fast: missing `bead_format` in config produces actionable error before planning starts
 
 ### Phase Ordering Rationale
 
-- CLI before orchestrator: Every SKILL.md bash block calls `ralph-tools.cjs`; without the CLI the orchestrator cannot be tested
-- State schema before phase prompts: Phase subagent prompts specify exact file paths to read/write; schema must be stable first
-- 2-phase end-to-end test before all 9 phases: Validates the `/clear` boundary pattern with minimal complexity
-- Research + PRD before Execution: Dependency chain — beads cannot exist without a PRD; PRD requires research context
-- Core pipeline before auto-advance: Auto-advance without verified gates compounds errors; gates must be trusted first
+- Codemaps before marathon: marathon's codemap lifecycle requires codemaps to work first; codemaps also independently useful in standard mode
+- Marathon reuses all 9 existing templates: zero template changes in Phase 2, only orchestrator and CLI additions
+- Integration testing as distinct phase: interaction surface (codemap paths through marathon orchestrator to templates, two-snapshot approach, config mode lifecycle) requires full pipeline runs to verify
+- prd.md and deepen.md template modifications are Phase 1 work (same codemap injection pattern as research.md and review.md); do not defer to Phase 2
 
 ### Research Flags
 
-Phases needing deeper research during planning:
-- **Phase 3:** Verify `/ralph-tui-prd` output format (what exactly does the skill write and where?) before writing PRD validation logic
-- **Phase 4:** Verify current `claude -p` CLI flags (`--max-turns`, `--allowedTools` syntax) before writing headless execution script template
+Phases with well-documented patterns (skip additional research):
+- **Phase 1 (Codemaps):** All source patterns read directly. Implementation is mechanical extension of existing `{{PHASE_FILES}}` pattern.
+- **Phase 2 (Marathon):** Architecture fully resolved. "Marathon uses /clear + mode flag, not a separate orchestrator" is confirmed.
+- **Phase 3 (Integration):** Standard test patterns from existing test files apply directly.
 
-Phases with standard patterns (skip research-phase):
-- **Phase 1:** `gsd-tools.cjs` is a complete reference implementation; replicate directly
-- **Phase 2:** GSD `execute-phase.md` and `discuss-phase.md` encode the orchestrator shell pattern
-- **Phase 5:** GSD `--auto` flag and config-based time budgeting are documented patterns
+Open questions to resolve before Phase 1:
+- `codemap_enabled` opt-in vs auto-detect default (research recommends opt-in to avoid surprising users)
+- Post-exec codemap directory: `.planning/codebase-post-exec/` (separate) vs overwriting `.planning/codebase/` (simpler; recommend separate)
+
+Open questions to resolve before Phase 2:
+- Marathon deepen gate: gate on P1 findings only (recommended) vs auto-approve all
+- Bead size ceiling for marathon-merge warning: 5000 tokens / ~20KB threshold needs validation against actual bead sizes
+
+---
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | Live reference implementation (`gsd-tools.cjs`) + official Claude Code skills docs. No exploratory decisions required. |
-| Features | HIGH | Cross-verified against GSD source, ralph-pipeline source, and multiple ecosystem sources. P1/P2/P3 prioritization is clear. |
-| Architecture | HIGH | Primary sources: current `SKILL.md`, GSD workflow files, `PROJECT.md` design decisions. Component boundaries are explicit. |
-| Pitfalls | HIGH | Derived from prior `CONCERNS.md` audit, GSD patterns, and direct analysis of existing ralph-pipeline failure modes. |
+| Stack | HIGH | All v1.0 source files read directly; zero new dependencies; all decisions extend existing proven patterns |
+| Features | HIGH | Feature set from PROJECT.md requirements + actual v1.0 code; competitor analysis confirms table stakes |
+| Architecture | HIGH | All lib/*.cjs modules, all 9 templates, SKILL.md, GSD map-codebase workflow — all read directly |
+| Pitfalls | HIGH | Direct codebase analysis (time-budget.cjs lines 49-74 cited; 15% budget constraint verified in PROJECT.md); two Claude Code GitHub issues cited |
 
 **Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **`/ralph-tui-prd` output format:** The exact file path and content structure that the external skill produces is not fully documented in research. Verify before implementing PRD validation logic in Phase 3. Low risk — one-time check against live skill.
-- **`claude -p` headless CLI flags:** The exact flags for `--max-turns`, `--allowedTools`, and output capture behavior may have changed since the research baseline. Verify during Phase 4 planning. Low risk — CLI help is authoritative.
-- **bead-results status convention:** The `status: passed|failed|blocked` convention is proposed in research but not inherited from an existing system. Must be explicitly defined and enforced in Phase 4 before headless execution is implemented.
-- **Compound-engineering agent names:** Agent names like `security-sentinel` and `architecture-strategist` are referenced in research but dynamic discovery is deferred. Hard-coded names in MVP; add discovery in v1.x.
+- **`codemap_enabled` opt-in vs auto-detect:** Recommend opt-in for v1.1 to avoid surprising users, but revisit if feature adoption is low.
+- **Post-exec codemap directory:** Separate `.planning/codebase-post-exec/` (recommended) vs overwrite; decide before Phase 1 completes to avoid rework.
+- **Marathon deepen P1 gate:** Product decision — gate on P1 design findings vs auto-approve all planning phases. Affects user trust in marathon output quality.
+- **Bead size warning threshold:** 5000 tokens / ~20KB ceiling needs validation against actual v1.0 bead files before implementing the check.
+
+---
 
 ## Sources
 
-### Primary (HIGH confidence)
-- `/Users/constantin/.claude/get-shit-done/bin/gsd-tools.cjs` — Complete reference CLI implementation
-- `/Users/constantin/.claude/get-shit-done/bin/lib/core.cjs`, `frontmatter.cjs` — Core patterns (output modes, YAML parser)
-- `/Users/constantin/.claude/get-shit-done/workflows/execute-phase.md` — Thin orchestrator, wave execution, lean context model
-- `/Users/constantin/.claude/get-shit-done/workflows/discuss-phase.md` — Auto-advance chain, disk state, /clear boundary handling
-- `/Users/constantin/Code/skills/ralph-pipeline/SKILL.md` — Existing implementation (anti-pattern baseline + pattern source)
-- `/Users/constantin/Code/skills/ralph-pipeline/.planning/PROJECT.md` — Authoritative design requirements
-- `/Users/constantin/Code/skills/ralph-pipeline/.planning/codebase/CONCERNS.md` — Prior concerns audit
-- `https://code.claude.com/docs/en/skills` — Official Claude Code skills documentation (frontmatter fields, string substitutions)
+### Primary (HIGH confidence — all read directly from codebase)
+- `/Users/constantin/Code/skills/ralph-pipeline/SKILL.md` — orchestrator logic, auto-advance, phase gate mechanism, /clear boundary pattern
+- `/Users/constantin/Code/skills/ralph-pipeline/ralph-tools.cjs` — CLI entry point, command routing
+- `/Users/constantin/Code/skills/ralph-pipeline/lib/` — all 10 modules (core.cjs config schema, orchestrator.cjs fillTemplate/PIPELINE_PHASES, init.cjs compound init, time-budget.cjs scope limitation lines 49-74)
+- All 9 `templates/*.md` — phase template structure, variable substitution, Task subagent dispatch
+- `/Users/constantin/Code/skills/ralph-pipeline/.reference/get-shit-done/workflows/map-codebase.md` — 7-document output format, 4 parallel mapper agent structure
+- `/Users/constantin/Code/skills/ralph-pipeline/.planning/codebase/*.md` — actual codemap output, 1383 lines baseline
+- `/Users/constantin/Code/skills/ralph-pipeline/.planning/PROJECT.md` — v1.1 requirements and constraints
 
-### Secondary (MEDIUM confidence)
-- `https://ralph-tui.com/` — Execution capabilities and session persistence
-- `https://mikhail.io/2025/10/claude-code-skills/` — Structural patterns for Claude Code skills
-- GSD GitHub + multiple 2025-2026 ecosystem sources — Feature landscape, orchestration anti-patterns
+### Secondary (MEDIUM confidence — web research)
+- Context Engineering for Coding Agents (Martin Fowler) — selective context injection per agent role
+- SPARC Automated Development — plan-then-execute phase separation pattern
+- Traycer YOLO Mode documentation — planning gate behavior in unattended pipeline runs
+- Gas Town: Kubernetes for AI Agents — nondeterministic idempotence for resume-from-failure
+- Addy Osmani LLM Workflow 2026 — planning-as-overhead framing
+- Windsurf Codemaps (Cognition AI) — codemap freshness and selective loading
+- Codified Context Infrastructure (arXiv 2602.20478) — keeping context infrastructure current
+
+### Tertiary (documented platform limitations)
+- Claude Code GitHub issue #13831 — headless `claude -p` irrecoverable context overflow
+- Claude Code GitHub issue #29193 — background task orphaning after compaction
 
 ---
-*Research completed: 2026-02-25*
+*Research completed: 2026-02-27*
 *Ready for roadmap: yes*
