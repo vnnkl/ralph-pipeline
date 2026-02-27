@@ -14,8 +14,8 @@ Requirements for marathon mode + codemaps integration. Each maps to roadmap phas
 - [ ] **CMAP-03**: PRD and deepen agents receive selective codemap files (ARCHITECTURE.md + STRUCTURE.md)
 - [ ] **CMAP-04**: Pipeline refreshes codemap after execution, before review phase
 - [ ] **CMAP-05**: Review agents receive post-execution codemap files (CONCERNS.md + CONVENTIONS.md)
-- [ ] **CMAP-06**: Pipeline detects existing codemap freshness via mtime and offers skip/refresh/generate
-- [ ] **CMAP-07**: `lib/codemap.cjs` provides check, paths, age CLI commands
+- [x] **CMAP-06**: Pipeline detects existing codemap freshness via mtime and offers skip/refresh/generate
+- [x] **CMAP-07**: `lib/codemap.cjs` provides check, paths, age CLI commands
 - [ ] **CMAP-08**: `templates/codemap.md` inlines mapper agent logic (no Skill tool dependency)
 
 ### Marathon
@@ -63,8 +63,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CMAP-03 | Phase 14 | Pending |
 | CMAP-04 | Phase 14 | Pending |
 | CMAP-05 | Phase 14 | Pending |
-| CMAP-06 | Phase 14 | Pending |
-| CMAP-07 | Phase 14 | Pending |
+| CMAP-06 | Phase 14 | Complete |
+| CMAP-07 | Phase 14 | Complete |
 | CMAP-08 | Phase 14 | Pending |
 | MARA-01 | Phase 15 | Pending |
 | MARA-02 | Phase 15 | Pending |

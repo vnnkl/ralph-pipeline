@@ -49,8 +49,8 @@
 **Plans**: TBD
 
 Plans:
-- [ ] 14-01: TBD
-- [ ] 14-02: TBD
+- [x] 14-01: CLI commands and freshness detection
+- [x] 14-02: Codemap generation template
 - [ ] 14-03: TBD
 
 ### Phase 15: Marathon Mode Orchestration
@@ -102,6 +102,6 @@ Plans:
 | 11. State Sync | v1.0 | 1/1 | Complete | 2026-02-26 |
 | 12. YOLO Time Budget | v1.0 | 1/1 | Complete | 2026-02-27 |
 | 13. Quality Gate + Doc | v1.0 | 1/1 | Complete | 2026-02-27 |
-| 14. Codemaps Foundation | v1.1 | 0/3 | Not started | - |
+| 14. Codemaps Foundation | 2/3 | In Progress|  | - |
 | 15. Marathon Orchestration | v1.1 | 0/2 | Not started | - |
 | 16. Integration Hardening | v1.1 | 0/1 | Not started | - |
