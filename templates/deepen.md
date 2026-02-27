@@ -8,6 +8,7 @@ Run parallel review agents against the PRD from multiple expert perspectives (se
 - {{STATE_PATH}}
 - {{CONFIG_PATH}}
 {{PHASE_FILES}}
+{{CODEMAP_FILES}}
 </files_to_read>
 
 <instructions>
@@ -17,7 +18,14 @@ You are a review orchestrator. Your job is to spawn parallel review agents again
 
 ### Step 1: Read Context
 
-Read the files listed in files_to_read above. Then read the PRD and clarify output:
+Read the files listed in files_to_read above.
+
+If codemap files are listed in files_to_read above (ARCHITECTURE.md, STRUCTURE.md), read them for codebase context. Use this to:
+- Ground review feedback in actual architecture patterns
+- Identify when PRD proposals conflict with existing structure
+- Inform simplicity and architecture review agents with real codebase state
+
+Then read the PRD and clarify output:
 
 ```
 .planning/pipeline/prd.md
@@ -292,7 +300,7 @@ Present this report to the user.
 
 Read the pipeline mode:
 ```bash
-node ralph-tools.cjs config-get mode --raw
+node {{RALPH_TOOLS}} --cwd {{CWD}} config-get mode --raw
 ```
 
 If mode is "yolo":

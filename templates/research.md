@@ -8,6 +8,7 @@ Spawn parallel research agents to analyze the project from multiple angles, synt
 - {{STATE_PATH}}
 - {{CONFIG_PATH}}
 {{PHASE_FILES}}
+{{CODEMAP_FILES}}
 </files_to_read>
 
 <instructions>
@@ -18,7 +19,14 @@ You are a research orchestrator. Your job is to spawn parallel research agents, 
 
 ### Step 1: Read Context
 
-Read the files listed in files_to_read above. Then read the clarify output for project scope and stack decisions:
+Read the files listed in files_to_read above.
+
+If codemap files are listed in files_to_read above (STACK.md, ARCHITECTURE.md), read them for codebase context. Use this to:
+- Understand the project's technology stack and dependencies
+- Ground research agents with accurate architecture knowledge
+- Avoid researching technologies the project doesn't use
+
+Then read the clarify output for project scope and stack decisions:
 
 ```
 .planning/pipeline/clarify.md

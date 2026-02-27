@@ -8,6 +8,7 @@ Run parallel review agents against actual bead-produced code changes (git diff),
 - {{STATE_PATH}}
 - {{CONFIG_PATH}}
 {{PHASE_FILES}}
+{{CODEMAP_FILES}}
 </files_to_read>
 
 <instructions>
@@ -20,6 +21,11 @@ You are a post-execution code review orchestrator. Your job is to scope the revi
 ### Step 1: Read Context
 
 Read the files listed in files_to_read above.
+
+If codemap files are listed in files_to_read above (CONCERNS.md, CONVENTIONS.md), read them for codebase context. Use this to:
+- Compare review findings against known concerns and conventions
+- Identify when bead execution introduced new concerns
+- Ground convention violations in documented project standards
 
 Read the execution output to get the pre-execution commit hash:
 
@@ -360,7 +366,7 @@ Present this report to the user.
 
 Read the pipeline mode:
 ```bash
-node ralph-tools.cjs config-get mode --raw
+node {{RALPH_TOOLS}} --cwd {{CWD}} config-get mode --raw
 ```
 
 If mode is "yolo":

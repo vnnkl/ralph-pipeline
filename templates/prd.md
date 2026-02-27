@@ -8,6 +8,7 @@ Create a Product Requirements Document (PRD) by invoking the /ralph-tui-prd skil
 - {{STATE_PATH}}
 - {{CONFIG_PATH}}
 {{PHASE_FILES}}
+{{CODEMAP_FILES}}
 </files_to_read>
 
 <instructions>
@@ -20,9 +21,14 @@ You are a PRD orchestrator. Your job is to invoke the /ralph-tui-prd skill with 
 
 Read the files listed in files_to_read above.
 
+If codemap files are listed in files_to_read above (ARCHITECTURE.md, STRUCTURE.md), read them for codebase context. Use this to:
+- Align PRD technical decisions with existing architecture
+- Reference actual project structure in user stories
+- Ground technical considerations in real codebase patterns
+
 Read the depth setting from config:
 ```bash
-node ralph-tools.cjs config-get depth
+node {{RALPH_TOOLS}} --cwd {{CWD}} config-get depth
 ```
 
 Based on the depth value, determine how much research context to load:
