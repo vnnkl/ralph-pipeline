@@ -1,14 +1,14 @@
 ---
 ralph_state_version: 1.0
-current_phase: 14
+current_phase: 15
 total_phases: 16
-current_plan: 3
-status: Phase 15 context gathered
-last_updated: "2026-02-27T14:00:43.335Z"
-last_activity: 2026-02-27 — Completed 14-03-PLAN.md (orchestrator integration)
-progress_percent: 25
-total_plans: 3
-completed_plans: 3
+current_plan: 1
+status: Executing phase 15, plan 1 complete
+last_updated: "2026-02-27T15:56:00.000Z"
+last_activity: 2026-02-27 — Completed 15-01-PLAN.md (marathon skill entry point)
+progress_percent: 30
+total_plans: 2
+completed_plans: 1
 ---
 
 # Project State
@@ -18,29 +18,30 @@ completed_plans: 3
 See: .planning/PROJECT.md (updated 2026-02-27)
 
 **Core value:** Context isolation through /clear between phases combined with ralph-tui's ability to execute large batches of work unattended
-**Current focus:** Phase 14 - Codemaps Foundation
+**Current focus:** Phase 15 - Marathon Mode Orchestration
 
 ## Current Position
 
-Phase: 14 of 16 (Codemaps Foundation)
-Plan: 3 of 3 in current phase (phase complete)
-Status: Phase 15 context gathered
-Last activity: 2026-02-27 — Completed 14-03-PLAN.md (orchestrator integration)
+Phase: 15 of 16 (Marathon Mode Orchestration)
+Plan: 1 of 2 in current phase
+Status: Executing phase 15, plan 1 complete
+Last activity: 2026-02-27 — Completed 15-01-PLAN.md (marathon skill entry point)
 
-Progress: [██░░░░░░░░] 25%
+Progress: [███░░░░░░░] 30%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3
-- Average duration: 3min
-- Total execution time: 0.13 hours
+- Total plans completed: 4
+- Average duration: 4min
+- Total execution time: 0.22 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 14 - Codemaps Foundation | 3 | 8min | 3min |
+| 15 - Marathon Mode Orchestration | 1 | 5min | 5min |
 
 ## Accumulated Context
 
@@ -54,6 +55,10 @@ Progress: [██░░░░░░░░] 25%
 - [14-03] Post-execution codemap refresh bypasses freshness (execution makes codemaps stale)
 - [14-03] Pre-research hook is freshness-gated, fully automatic (no user prompt)
 - [14-03] Template guidance uses conditional phrasing for graceful degradation
+- [15-01] YOLO skip rule: skip wizard entirely if mode already yolo, only prompt for bead_format if missing
+- [15-01] Step 8 placeholder for bead review gate keeps MARATHON.md extensible
+- [15-01] No time-budget start during planning -- deferred to execute phase via config flag
+- [15-01] Clean .beads/ before convert prevents stale bead accumulation
 
 ### Pending Todos
 
@@ -73,4 +78,4 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-27
-Stopped at: Completed 14-03-PLAN.md (orchestrator integration) -- Phase 14 complete
+Stopped at: Completed 15-01-PLAN.md (marathon skill entry point)
