@@ -1,8 +1,8 @@
-# ralph-gsd
+# ralph-pipeline
 
 ## What This Is
 
-A Claude Code plugin system (skill + CLI tool + templates) that takes a feature idea from blank page to shipped code using GSD's orchestration patterns — `/clear` between phases, centralized state via CLI, auto-advance chains — but executes work through ralph-tui loops instead of inline code generation. ralph-tui can run 60+ beads overnight unattended, making this pipeline capable of shipping entire features hands-free.
+A Claude Code skill that orchestrates a 9-phase idea-to-code pipeline — from research through PRD, bead conversion, headless execution, and compound review — using `/clear` between phases for context isolation and ralph-tui as the execution engine. Ships as a single installable skill with a zero-dependency Node.js CLI (ralph-tools.cjs) and 9 subagent templates.
 
 ## Core Value
 
@@ -12,64 +12,63 @@ Context isolation through `/clear` between phases combined with ralph-tui's abil
 
 ### Validated
 
-(None yet — ship to validate)
+- ✓ Plugin structure: skill files + ralph-tools.cjs CLI + templates directory — v1.0
+- ✓ `/clear` between phases for true context isolation — v1.0
+- ✓ ralph-tools.cjs: Node.js CLI for all state mutations, config reads, commits — v1.0
+- ✓ Auto-advance chain: phases advance hands-free with SessionStart hook — v1.0
+- ✓ Time budget mode: user specifies hours, pipeline stops at phase boundary — v1.0
+- ✓ Configurable depth: controls bead granularity (quick/standard/comprehensive) — v1.0
+- ✓ Execution gate per phase: headless (claude -p) or manual (ralph-tui) — v1.0
+- ✓ Chain existing skills: /ralph-tui-prd, /ralph-tui-create-beads invoked as-is — v1.0
+- ✓ Parallel review agents post-execution (security, architecture, performance, simplicity) — v1.0
+- ✓ Research agents before PRD creation (repo-research, best-practices, framework-docs, learnings) — v1.0
+- ✓ Structured .planning/ directory: all state on disk, machine + human readable — v1.0
+- ✓ Resumable state: pick up after crash, /clear, or new session — v1.0
+- ✓ YOLO mode: auto-approve all gates for unattended pipeline runs — v1.0
 
 ### Active
 
-- [ ] Plugin structure: skill files + ralph-tools.cjs CLI + templates directory
-- [ ] `/clear` between phases for true context isolation (each phase is a fresh session)
-- [ ] ralph-tools.cjs: Node.js CLI for all state mutations, config reads, commits, progress tracking
-- [ ] Auto-advance chain: research → PRD → beads → execute → review → next phase, hands-free
-- [ ] Wave-based phase execution: one ralph-tui loop per phase, multiple phases batchable
-- [ ] Time budget mode: user specifies hours, pipeline auto-advances until budget expires (finishes current phase before stopping)
-- [ ] Configurable depth: controls how many beads per phase (quick/standard/comprehensive)
-- [ ] Execution gate per phase: user chooses headless (claude -p per bead) or manual (launch ralph-tui themselves)
-- [ ] Chain existing skills: invoke /ralph-tui-prd for PRD creation, /ralph-tui-create-beads for conversion (don't reimplement)
-- [ ] Parallel review agents post-execution (security, architecture, performance, simplicity)
-- [ ] Research agents before PRD creation (repo-research, best-practices, framework-docs, learnings)
-- [ ] Structured .planning/ directory: PROJECT.md, REQUIREMENTS.md, ROADMAP.md, STATE.md, config.json, research/
-- [ ] Resumable state: pick up where you left off after crash, /clear, or new session
+- [ ] Harvest phase (/choo-choo-ralph): extract reusable patterns from completed work
+- [ ] Codemaps integration: use as shared context for research and review agents
+- [ ] Multi-phase batching: batch multiple phases into single overnight run
 
 ### Out of Scope
 
-- Harvest phase (/choo-choo-ralph) — dropped from this version
-- Codemaps integration (/update-codemaps) — not part of core pipeline
 - Inlining PRD or bead skill logic — invoke as-is, don't reimplement
 - Reusing gsd-tools.cjs directly — build ralph-tools.cjs purpose-built
+- Real-time dashboard / live streaming — ralph-tui's TUI handles execution visibility
+- Compiled npm dependencies — breaks zero-dep constraint
 
 ## Context
 
-**Current state:** ralph-pipeline exists as a single 800-line SKILL.md that runs all 9 phases in one session using subagents. It works but accumulates context. GSD solves this with `/clear` between phases — each phase invocation is a fresh session that reads state from disk.
-
-**Key insight:** GSD's gsd-executor writes code directly in subagents. ralph-tui spawns independent Claude sessions per bead, each with fresh context and no memory of prior work. This means execution scales horizontally — 60 tasks overnight is routine. The pipeline should leverage this by packing more work into phases when the user has time.
-
-**Dependencies (invoke, don't reimplement):**
-- `/ralph-tui-prd` — PRD creation from research context
-- `/ralph-tui-create-beads` — converts PRD to beads (Go CLI `bd`)
-- `/ralph-tui-create-beads-rust` — converts PRD to beads (Rust CLI `br`)
-- `/ralph-tui-create-json` — converts PRD to prd.json (no CLI needed)
-- `compound-engineering` plugin — research + review agents
-- `Context7` MCP — framework docs lookup during research
-
-**Target audience:** Public skill for anyone with Claude Code + ralph-tui.
+Shipped v1.0 with 3,309 LOC Node.js CJS across 13 phases and 26 plans.
+Tech stack: Node.js CJS (zero dependencies), YAML frontmatter + markdown state, Claude Code skills.
+Four milestone audits drove systematic gap closure (42/42 requirements satisfied).
+Known gap: `/frontend-design` skill referenced but not yet created (external dependency).
 
 ## Constraints
 
 - **Skill format**: Must be installable as a Claude Code skill (markdown + supporting files)
-- **No compiled deps**: ralph-tools.cjs must be a single .cjs file with zero npm dependencies (like gsd-tools.cjs)
-- **Context budget**: Orchestrator must stay under 15% context usage — all heavy work in subagents or ralph-tui
-- **Existing skills**: Must invoke /ralph-tui-prd, /ralph-tui-create-beads as-is — they're maintained separately
+- **No compiled deps**: ralph-tools.cjs must be a single .cjs file with zero npm dependencies
+- **Context budget**: Orchestrator must stay under 15% context usage — all heavy work in subagents
+- **Existing skills**: Must invoke /ralph-tui-prd, /ralph-tui-create-beads as-is
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Name: ralph-gsd | Signals GSD influence while keeping ralph identity | — Pending |
-| Study GSD, don't clone | Extract patterns, implement fresh — cleaner than forking | — Pending |
-| Node.js for ralph-tools.cjs | Match gsd-tools pattern: single .cjs, no deps, ships with skill | — Pending |
-| Chain skills, don't inline | Skills maintained separately; chaining prevents duplication | — Pending |
-| Time budget (not phase count) | Finishes current phase before stopping — clean boundaries | — Pending |
-| Execution gate per phase | User chooses headless vs manual each time — flexibility | — Pending |
+| Name: ralph-pipeline | Signals GSD influence while keeping ralph identity | ✓ Good |
+| Study GSD, don't clone | Extract patterns, implement fresh — cleaner than forking | ✓ Good |
+| Node.js CJS for ralph-tools.cjs | Match gsd-tools pattern: single .cjs, no deps, ships with skill | ✓ Good |
+| Chain skills, don't inline | Skills maintained separately; chaining prevents duplication | ✓ Good |
+| Time budget (not phase count) | Finishes current phase before stopping — clean boundaries | ✓ Good |
+| Execution gate per phase | User chooses headless vs manual each time — flexibility | ✓ Good |
+| YOLO mode auto-approve all gates | Enables unattended overnight runs | ✓ Good |
+| Auto-advance via SessionStart hook | /clear + hook re-invocation for true context isolation | ✓ Good |
+| Trust file scan over STATE.md | File system is ground truth; STATE.md can lag | ✓ Good |
+| Quality gates by delegation | QUALITY_GATE_SUFFIX appended to bead prompt, not external check | ✓ Good |
+| Absolute timestamp for budget expiry | Survives /clear without recalculation | ✓ Good |
+| 4 iterative milestone audits | Systematic convergence: each audit drives gap-closure phases | ✓ Good |
 
 ---
-*Last updated: 2026-02-25 after initialization*
+*Last updated: 2026-02-27 after v1.0 milestone*
