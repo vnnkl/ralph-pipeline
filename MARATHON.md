@@ -378,9 +378,169 @@ After /clear, the marathon loop continues -- re-invoking marathon will pick up f
 
 ## Step 8: Bead Inventory Review Gate
 
-*Proceed to Step 8: Bead Inventory Review Gate (defined in Plan 15-02).*
+After phase 7 (convert) completes and is approved, present the bead inventory for review.
 
-This step is added by a subsequent plan and handles: reading `.beads/*.md` inventory, presenting a review table with partial selection, and the reject-to-resolve loop.
+**8.1 List bead files:**
+
+```bash
+ls {PROJECT_CWD}/.beads/*.md 2>/dev/null | sort
+```
+
+If zero beads found:
+- Log: "No beads found after convert phase. Something went wrong."
+- Clean up config: `node {RALPH_TOOLS} --cwd {PROJECT_CWD} config-set marathon false`
+- Stop marathon with error message. Do NOT continue.
+
+**8.2 Build inventory table:**
+
+For each bead file, read its content and extract:
+- **Bead name:** From filename, strip `.md` extension
+- **Type:** Check if filename contains `bd` or `br` pattern, or read `type` from frontmatter if present
+- **Estimated complexity:** Count non-frontmatter lines (body lines). If frontmatter has a `complexity` field, use that instead. Otherwise: <20 lines = Low, 20-50 lines = Medium, >50 lines = High
+- **Source:** Extract `story_id` from frontmatter, or parse story ID from filename (e.g., "US-001" from "US-001-auth-flow.md")
+
+Use `extractFrontmatter()` logic (parse `---` delimited YAML at top of file) to read frontmatter fields. Count body lines (everything after the closing `---`) for complexity estimation.
+
+**8.3 Present the inventory:**
+
+```
+## Bead Inventory Review
+
+| # | Bead | Type | Complexity | Source |
+|---|------|------|------------|--------|
+| 1 | US-001-auth-flow | bd | Medium | US-001 |
+| 2 | US-002-dashboard | bd | High | US-002 |
+...
+
+**Total:** {N} beads
+**Estimated execution time:** {estimate}h (based on {low_count} Low, {med_count} Medium, {high_count} High)
+```
+
+Time estimate heuristic: Low = 10min, Medium = 20min, High = 40min per bead. Sum and convert to hours.
+
+**8.4 Check YOLO mode:**
+
+```bash
+node {RALPH_TOOLS} --cwd {PROJECT_CWD} config-get mode --raw
+```
+
+**If YOLO:**
+- Auto-approve all beads
+- Log: "YOLO mode: auto-approved all {N} beads"
+- Skip directly to Step 10 (Marathon Complete)
+
+**If NOT YOLO:**
+
+Present options via AskUserQuestion:
+- **Header:** "Bead Inventory Review"
+- **Question:** "Review the bead inventory above. Choose how to proceed:"
+- **Options:**
+  1. **Approve all** -- Accept all beads and stop marathon
+  2. **Drop beads** -- Specify which beads to exclude from execution
+  3. **Reject** -- Return to Resolve phase to fix open questions, then re-run Convert
+
+Handle responses:
+
+**If "Approve all" (or "1"):** Proceed to Step 10 (Marathon Complete).
+
+**If "Drop beads" (or "2"):**
+- Ask: "Which beads should be dropped? Enter bead numbers (e.g., '2, 5, 7') or bead names:"
+- Parse user response to identify which beads to remove
+- Delete the specified bead files from `.beads/`:
+  ```bash
+  rm -f {PROJECT_CWD}/.beads/{BEAD_NAME}.md
+  ```
+- Log: "Dropped {N} beads. {remaining} beads remain."
+- Re-display the updated inventory table (without dropped beads)
+- Re-present the same 3 options (user may want to drop more or approve)
+
+**If "Reject" (or "3"):** Proceed to Step 9 (Reject-to-Resolve Loop).
+
+---
+
+## Step 9: Reject-to-Resolve Loop
+
+When user rejects the bead inventory:
+
+**9.1 Reset resolve and convert phase outputs** to force re-execution:
+
+```bash
+rm -f {PROJECT_CWD}/.planning/pipeline/resolve.md
+rm -f {PROJECT_CWD}/.planning/pipeline/convert.md
+```
+
+**9.2 Clear stale beads:**
+
+```bash
+rm -f {PROJECT_CWD}/.beads/*.md 2>/dev/null
+```
+
+**9.3** Log: "Returning to Resolve phase. Fix open questions, then Convert will re-run."
+
+**9.4 Re-enter the marathon phase loop** starting from Step 2 (Position Detection). The `scan-phases` check will see phase 6 (resolve) as incomplete (file deleted) and dispatch it, followed by phase 7 (convert, also deleted), which will produce new beads and return to Step 8 (bead review gate).
+
+**IMPORTANT:** The loop re-entry point is Step 2 (Position Detection) -- scan-phases will naturally find phase 6 as the first incomplete phase and resume from there. Do NOT clean up `config.marathon` on rejection -- the loop continues.
+
+---
+
+## Step 10: Marathon Complete
+
+After bead review is approved (or auto-approved by YOLO):
+
+**10.1 Log final summary:**
+
+```
+## Marathon Planning Complete
+
+All 7 planning phases finished. Bead inventory approved.
+
+**Beads ready:** {N} beads in .beads/
+**Bead format:** {format from config}
+**Time budget:** {marathon_time_budget_hours}h (will start when execution begins)
+
+To execute, run the standard pipeline:
+  /ralph-pipeline
+
+The pipeline will detect marathon-completed planning (phases 1-7 done),
+skip to phase 8 (execute), and start the time budget at that point.
+```
+
+**10.2 Clean up marathon-specific config:**
+
+```bash
+node {RALPH_TOOLS} --cwd {PROJECT_CWD} config-set marathon false
+```
+
+Note: Do NOT clear `marathon_time_budget_hours` -- the standard pipeline needs this value to start the time budget when execution begins. Do NOT clear `bead_format` -- it persists for the project.
+
+**10.3 Clear auto_advance if set:**
+
+```bash
+node {RALPH_TOOLS} --cwd {PROJECT_CWD} config-set auto_advance false
+```
+
+**10.4 Stop.** Marathon never dispatches execute or review phases.
+
+---
+
+## Config Cleanup on Any Stop
+
+Whenever marathon stops for ANY reason (completion, abort, error), ensure `config.marathon` is set to false:
+
+```bash
+node {RALPH_TOOLS} --cwd {PROJECT_CWD} config-set marathon false
+```
+
+This prevents the standard pipeline from seeing stale marathon state.
+
+**Exception:** The reject-to-resolve loop (Step 9) does NOT clean up marathon -- it re-enters the loop and marathon remains active.
+
+**Terminal stop scenarios that require cleanup:**
+- Step 10: Marathon Complete (normal finish)
+- Step 8.1: No beads found (error stop)
+- YOLO retry exhaustion (phase failed after retry)
+- User selects "abort" at any gate
+- Any unrecoverable error during phase dispatch
 
 ---
 
