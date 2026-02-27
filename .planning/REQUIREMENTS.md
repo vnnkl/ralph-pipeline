@@ -58,25 +58,25 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CMAP-01 | — | Pending |
-| CMAP-02 | — | Pending |
-| CMAP-03 | — | Pending |
-| CMAP-04 | — | Pending |
-| CMAP-05 | — | Pending |
-| CMAP-06 | — | Pending |
-| CMAP-07 | — | Pending |
-| CMAP-08 | — | Pending |
-| MARA-01 | — | Pending |
-| MARA-02 | — | Pending |
-| MARA-03 | — | Pending |
-| MARA-04 | — | Pending |
-| MARA-05 | — | Pending |
+| CMAP-01 | Phase 14 | Pending |
+| CMAP-02 | Phase 14 | Pending |
+| CMAP-03 | Phase 14 | Pending |
+| CMAP-04 | Phase 14 | Pending |
+| CMAP-05 | Phase 14 | Pending |
+| CMAP-06 | Phase 14 | Pending |
+| CMAP-07 | Phase 14 | Pending |
+| CMAP-08 | Phase 14 | Pending |
+| MARA-01 | Phase 15 | Pending |
+| MARA-02 | Phase 15 | Pending |
+| MARA-03 | Phase 15 | Pending |
+| MARA-04 | Phase 15 | Pending |
+| MARA-05 | Phase 15 | Pending |
 
 **Coverage:**
 - v1.1 requirements: 13 total
-- Mapped to phases: 0
-- Unmapped: 13 ⚠️
+- Mapped to phases: 13
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-27*
-*Last updated: 2026-02-27 after initial definition*
+*Last updated: 2026-02-27 after roadmap creation*
