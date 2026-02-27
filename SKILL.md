@@ -185,8 +185,8 @@ Fill template variables using the `fillTemplate` function from `lib/orchestrator
 | 2 - clarify | *(empty)* |
 | 3 - research | `- .planning/pipeline/clarify.md` |
 | 4 - prd | `- .planning/research/SUMMARY.md\n- .planning/pipeline/clarify.md` |
-| 5 - deepen | `- .planning/pipeline/prd.md` |
-| 6 - resolve | `- .planning/pipeline/prd.md\n- .planning/pipeline/open-questions.md` |
+| 5 - deepen | `- .planning/pipeline/prd.md\n- .planning/pipeline/clarify.md` |
+| 6 - resolve | `- .planning/pipeline/prd.md\n- .planning/pipeline/open-questions.md\n- .planning/pipeline/clarify.md` |
 | 7 - convert | `- .planning/pipeline/prd.md` |
 | 8 - execute | *(empty)* |
 | 9 - review | *(empty)* |
