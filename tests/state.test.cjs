@@ -192,6 +192,30 @@ test('stateReplaceField + syncStateFrontmatter round-trip preserves change', () 
     'Frontmatter should be rebuilt from updated body with current_phase: 2');
 });
 
+// -- Tests: frontmatter-only field (minimal STATE.md from preflight) --------
+
+const STATE_FIXTURE_FM_ONLY = `---
+Phase: 1
+Status: Starting
+---
+# State
+`;
+
+test('stateExtractField extracts Status from frontmatter-only STATE.md', () => {
+  const result = stateExtractField(STATE_FIXTURE_FM_ONLY, 'Status');
+  assert.strictEqual(result, 'Starting',
+    `Expected 'Starting' but got '${result}' -- should fall back to frontmatter`);
+});
+
+test('stateReplaceField replaces Status in frontmatter-only STATE.md', () => {
+  const result = stateReplaceField(STATE_FIXTURE_FM_ONLY, 'Status', 'Phase 2 complete');
+  assert.ok(result !== null, 'Should not return null for frontmatter-only field');
+  assert.ok(result.includes('Status: Phase 2 complete'),
+    'Should contain updated Status value');
+  assert.ok(!result.includes('Status: Starting'),
+    'Should not contain old Status value');
+});
+
 // -- Run --------------------------------------------------------------------
 
 console.log('tests/state.test.cjs\n');

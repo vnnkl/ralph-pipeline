@@ -24,7 +24,7 @@ Read the files listed in files_to_read above.
 
 Run:
 ```bash
-node ralph-tools.cjs config-get mode --raw
+node {{RALPH_TOOLS}} --cwd {{CWD}} config-get mode --raw
 ```
 
 If the result is "yolo", set YOLO_MODE = true. Otherwise, set YOLO_MODE = false.
@@ -34,7 +34,7 @@ If the result is "yolo", set YOLO_MODE = true. Otherwise, set YOLO_MODE = false.
 Run the preflight CLI command and capture both stdout and the exit code:
 
 ```bash
-node ralph-tools.cjs preflight --raw
+node {{RALPH_TOOLS}} --cwd {{CWD}} preflight --raw
 ```
 
 **If exit code is 0 (passed):**
@@ -90,7 +90,7 @@ If YOLO_MODE is false:
     2. Retry -- Re-run preflight checks without installing
     3. Abort pipeline -- Stop the pipeline
 
-- If user selects option 1 or 2: Re-run `node ralph-tools.cjs preflight --raw` (go back to the start of Step 2). Maximum 3 retries total. After 3 failed retries, return: ## PHASE FAILED
+- If user selects option 1 or 2: Re-run `node {{RALPH_TOOLS}} --cwd {{CWD}} preflight --raw` (go back to the start of Step 2). Maximum 3 retries total. After 3 failed retries, return: ## PHASE FAILED
 - If user selects option 3: Return: ## PHASE FAILED
 
 ### Step 3: Handle Setup Actions
@@ -99,7 +99,7 @@ From the preflight result JSON, iterate the `setup_actions` array. For each acti
 
 **add_gitignore:**
 ```bash
-node ralph-tools.cjs setup-gitignore {pattern}
+node {{RALPH_TOOLS}} --cwd {{CWD}} setup-gitignore {pattern}
 ```
 Log: "Added {pattern} to .gitignore"
 
@@ -107,14 +107,35 @@ Log: "Added {pattern} to .gitignore"
 ```bash
 mkdir -p .planning
 ```
-For each file in the action's `missing_files` array, create a minimal placeholder if it does not already exist. Log: "Created .planning/{filename}"
+For each file in the action's `missing_files` array, create the file if it does not already exist. Log: "Created .planning/{filename}"
+
+For STATE.md specifically, use this exact template (replace `{today}` with today's date in YYYY-MM-DD format):
+
+```markdown
+# Pipeline State
+
+## Current Position
+
+Phase: 1 of 9 (Preflight)
+Status: Starting
+Last activity: {today}
+
+Progress: [----------] 0%
+
+## Session Continuity
+
+Last session: {today}
+Stopped at: Pipeline starting
+```
+
+For other files (ROADMAP.md, PROJECT.md), create a minimal placeholder with a heading.
 
 **ask_ide:**
 
 If YOLO_MODE is true:
 - Default to "vscode" without asking:
   ```bash
-  node ralph-tools.cjs config-set ide vscode
+  node {{RALPH_TOOLS}} --cwd {{CWD}} config-set ide vscode
   ```
   Log: "YOLO mode: defaulted IDE to vscode"
 
@@ -125,7 +146,7 @@ If YOLO_MODE is false:
   - Options: Use the options array from the action (e.g., vscode, cursor, zed, neovim, other)
 - Then run:
   ```bash
-  node ralph-tools.cjs config-set ide {user_choice}
+  node {{RALPH_TOOLS}} --cwd {{CWD}} config-set ide {user_choice}
   ```
 
 If `setup_actions` is empty, log: "No setup actions needed."
@@ -170,7 +191,7 @@ Return:
 <success_criteria>
 - Output file exists at .planning/pipeline/{{PIPELINE_PHASE}}.md
 - Output file has `completed: true` in frontmatter
-- CLI was invoked via `node ralph-tools.cjs preflight --raw`
+- CLI was invoked via `node {{RALPH_TOOLS}} --cwd {{CWD}} preflight --raw`
 - Results displayed as checklist summary
 - Failures gated via AskUserQuestion with Install and retry / Retry / Abort options
 - Setup actions handled (gitignore, planning dir, IDE preference)
