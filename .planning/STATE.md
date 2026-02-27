@@ -1,14 +1,14 @@
 ---
-ralph_state_version: 1.0
-current_phase: 15
-total_phases: 16
-current_plan: 2
-status: Phase 15 complete (all plans executed)
-last_updated: "2026-02-27T16:01:16.000Z"
-last_activity: 2026-02-27 — Completed 15-02-PLAN.md (bead inventory review gate)
-progress_percent: 100
-total_plans: 2
-completed_plans: 2
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: Marathon Mode + Codemaps
+status: unknown
+last_updated: "2026-02-27T16:07:56.633Z"
+progress:
+  total_phases: 2
+  completed_phases: 2
+  total_plans: 5
+  completed_plans: 5
 ---
 
 # Project State
