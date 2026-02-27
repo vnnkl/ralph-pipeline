@@ -190,7 +190,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. `time-budget estimate` returns avg_bead_duration_ms based on actual recorded data, not 20-min default
   3. estimated_beads_remaining is accurate in YOLO sessions
 **Plans**: 1 plan
-- [ ] 12-01-PLAN.md -- YOLO headless default + manual-mode duration capture via timestamp diffs
+- [x] 12-01-PLAN.md -- YOLO headless default + manual-mode duration capture via timestamp diffs
 
 ### Phase 13: Quality Gate + Doc Polish
 **Goal:** Fix review re-run quality gate suffix and align documentation declarations — closes the last flow gap and remaining doc-level tech debt
@@ -202,7 +202,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. clarify.md declared in PHASE_FILES constant in orchestrator
   3. time-budget subcommands listed in SKILL.md CLI reference table
 **Plans**: 1 plan
-- [ ] 13-01-PLAN.md -- Review re-run quality gate suffix + PHASE_FILES clarify.md + CLI table expansion
+- [x] 13-01-PLAN.md -- Review re-run quality gate suffix + PHASE_FILES clarify.md + CLI table expansion
 
 ## Progress
 

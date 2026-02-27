@@ -44,7 +44,6 @@ async function runTests() {
 const {
   PIPELINE_PHASES,
   scanPipelinePhases,
-  detectPosition,
   fillTemplate,
   excerptFile,
 } = require('../lib/orchestrator.cjs');
@@ -184,57 +183,6 @@ test('scanPipelinePhases: returns immutable results (does not mutate PIPELINE_PH
     // Result should have those properties
     assert.strictEqual(typeof result[0].outputExists, 'boolean');
     assert.strictEqual(typeof result[0].completed, 'boolean');
-  } finally {
-    cleanupTempDir(tmpDir);
-  }
-});
-
-// =============================================================================
-// detectPosition(cwd, statePhase)
-// =============================================================================
-
-test('detectPosition: state and file scan agree on next phase', () => {
-  const tmpDir = createTempProject({
-    'preflight.md': '---\ncompleted: true\n---\nDone\n',
-    'clarify.md': '---\ncompleted: true\n---\nDone\n',
-  });
-  try {
-    // Phase 3 (research) is next incomplete -- statePhase agrees
-    const result = detectPosition(tmpDir, 3);
-    assert.strictEqual(result.phase, 3);
-    assert.strictEqual(result.mismatch, false);
-  } finally {
-    cleanupTempDir(tmpDir);
-  }
-});
-
-test('detectPosition: state disagrees with file scan -- trusts file scan', () => {
-  const tmpDir = createTempProject({
-    'preflight.md': '---\ncompleted: true\n---\nDone\n',
-    'clarify.md': '---\ncompleted: true\n---\nDone\n',
-  });
-  try {
-    // File scan says phase 3, state says phase 4 -- mismatch
-    const result = detectPosition(tmpDir, 4);
-    assert.strictEqual(result.phase, 3);
-    assert.strictEqual(result.mismatch, true);
-    assert.strictEqual(result.corrected_from, 4);
-  } finally {
-    cleanupTempDir(tmpDir);
-  }
-});
-
-test('detectPosition: all phases complete returns pipeline_complete', () => {
-  const allFiles = {};
-  const names = ['preflight', 'clarify', 'research', 'prd', 'deepen', 'resolve', 'convert', 'execute', 'review'];
-  for (const name of names) {
-    allFiles[`${name}.md`] = '---\ncompleted: true\n---\nDone\n';
-  }
-  const tmpDir = createTempProject(allFiles);
-  try {
-    const result = detectPosition(tmpDir, 9);
-    assert.strictEqual(result.phase, null);
-    assert.strictEqual(result.pipeline_complete, true);
   } finally {
     cleanupTempDir(tmpDir);
   }

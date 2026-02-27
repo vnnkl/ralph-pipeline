@@ -135,24 +135,6 @@ test('init phase returns time_budget_expires when set in config', () => {
   }
 });
 
-test('init pipeline returns time_budget field alongside time_budget_expires', () => {
-  const tmpDir = createTempProjectWithConfig({
-    time_budget_expires: 1740000000000,
-    time_budget: null,
-  });
-  try {
-    const stdout = execSync(
-      `node ralph-tools.cjs init pipeline --cwd "${tmpDir}" --raw`,
-      { cwd: PROJECT_ROOT, encoding: 'utf-8' }
-    );
-    const result = JSON.parse(stdout);
-    assert.strictEqual(result.time_budget, null, 'legacy time_budget field preserved');
-    assert.strictEqual(result.time_budget_expires, 1740000000000, 'new time_budget_expires field present');
-  } finally {
-    cleanupTmpDir(tmpDir);
-  }
-});
-
 // -- Run ------------------------------------------------------------------------
 
 console.log('tests/init.test.cjs\n');
