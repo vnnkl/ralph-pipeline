@@ -9,14 +9,14 @@ Requirements for marathon mode + codemaps integration. Each maps to roadmap phas
 
 ### Codemaps
 
-- [ ] **CMAP-01**: Pipeline generates codemap before research phase via 4 parallel mapper agents writing to `.planning/codebase/`
+- [x] **CMAP-01**: Pipeline generates codemap before research phase via 4 parallel mapper agents writing to `.planning/codebase/`
 - [ ] **CMAP-02**: Research agents receive selective codemap files (STACK.md + ARCHITECTURE.md) via `{{CODEMAP_FILES}}`
 - [ ] **CMAP-03**: PRD and deepen agents receive selective codemap files (ARCHITECTURE.md + STRUCTURE.md)
 - [ ] **CMAP-04**: Pipeline refreshes codemap after execution, before review phase
 - [ ] **CMAP-05**: Review agents receive post-execution codemap files (CONCERNS.md + CONVENTIONS.md)
 - [x] **CMAP-06**: Pipeline detects existing codemap freshness via mtime and offers skip/refresh/generate
 - [x] **CMAP-07**: `lib/codemap.cjs` provides check, paths, age CLI commands
-- [ ] **CMAP-08**: `templates/codemap.md` inlines mapper agent logic (no Skill tool dependency)
+- [x] **CMAP-08**: `templates/codemap.md` inlines mapper agent logic (no Skill tool dependency)
 
 ### Marathon
 
@@ -58,14 +58,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CMAP-01 | Phase 14 | Pending |
+| CMAP-01 | Phase 14 | Complete |
 | CMAP-02 | Phase 14 | Pending |
 | CMAP-03 | Phase 14 | Pending |
 | CMAP-04 | Phase 14 | Pending |
 | CMAP-05 | Phase 14 | Pending |
 | CMAP-06 | Phase 14 | Complete |
 | CMAP-07 | Phase 14 | Complete |
-| CMAP-08 | Phase 14 | Pending |
+| CMAP-08 | Phase 14 | Complete |
 | MARA-01 | Phase 15 | Pending |
 | MARA-02 | Phase 15 | Pending |
 | MARA-03 | Phase 15 | Pending |

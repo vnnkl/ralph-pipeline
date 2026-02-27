@@ -32,7 +32,7 @@ Progress: [█░░░░░░░░░] 17%
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 1
+- Total plans completed: 2
 - Average duration: 2min
 - Total execution time: 0.03 hours
 
@@ -40,8 +40,7 @@ Progress: [█░░░░░░░░░] 17%
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 14 - Codemaps Foundation | 1 | 2min | 2min |
-| Phase 14 P01 | 2min | 2 tasks | 3 files |
+| 14 - Codemaps Foundation | 2 | 4min | 2min |
 
 ## Accumulated Context
 
