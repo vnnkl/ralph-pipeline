@@ -63,11 +63,11 @@ Plans:
   3. The `.beads/` directory contains the merged bead queue from all planning phases, ready for single-run execution
   4. Marathon mode combined with YOLO mode auto-approves the bead inventory review gate and proceeds to execution without user intervention
   5. Time budget expiry timestamp is not set until the execute phase begins (planning phases are never budget-constrained)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 15-01: TBD
-- [ ] 15-02: TBD
+- [ ] 15-01: Marathon skill entry point with setup wizard and phase chaining (phases 1-7)
+- [ ] 15-02: Bead inventory review gate with partial selection, reject loop, YOLO integration
 
 ### Phase 16: Integration Testing and Hardening
 **Goal**: Both features verified working together end-to-end with edge cases handled -- standard mode + codemaps, marathon mode + codemaps, resume after failure, config cleanup
