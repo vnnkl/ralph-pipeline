@@ -1,13 +1,13 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
+milestone: v1.0
 milestone_name: Marathon Mode + Codemaps
-status: active
-last_updated: "2026-02-27"
+status: unknown
+last_updated: "2026-02-27T13:17:17.123Z"
 progress:
-  total_phases: 3
-  completed_phases: 0
-  total_plans: 6
+  total_phases: 1
+  completed_phases: 1
+  total_plans: 3
   completed_plans: 3
 ---
 
