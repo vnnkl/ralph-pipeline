@@ -24,7 +24,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 10: Cosmetic Cleanup** - loadConfig defaults, ROADMAP checkboxes, traceability table, dead code (completed 2026-02-26)
 - [x] **Phase 11: Orchestrator State Sync** - Wire cmdPhaseComplete into orchestrator, fix STATE.md staleness
 - [x] **Phase 12: YOLO Time Budget Tracking** - Call record-bead in YOLO mode, fix estimate default (completed 2026-02-27)
-- [ ] **Phase 13: Quality Gate + Doc Polish** - Review re-run QUALITY_GATE_SUFFIX, PHASE_FILES, SKILL.md CLI table
+- [x] **Phase 13: Quality Gate + Doc Polish** - Review re-run QUALITY_GATE_SUFFIX, PHASE_FILES, SKILL.md CLI table (completed 2026-02-27)
 
 ## Phase Details
 
@@ -201,6 +201,8 @@ Decimal phases appear between their surrounding integers in numeric order.
   1. Re-running a bead from review gate appends QUALITY_GATE_SUFFIX to the bead prompt
   2. clarify.md declared in PHASE_FILES constant in orchestrator
   3. time-budget subcommands listed in SKILL.md CLI reference table
+**Plans**: 1 plan
+- [ ] 13-01-PLAN.md -- Review re-run quality gate suffix + PHASE_FILES clarify.md + CLI table expansion
 
 ## Progress
 
@@ -221,4 +223,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 10. Cosmetic Cleanup | 1/1 | Complete | 2026-02-26 |
 | 11. Orchestrator State Sync | 1/1 | Complete    | 2026-02-26 |
 | 12. YOLO Time Budget Tracking | 1/1 | Complete    | 2026-02-27 |
-| 13. Quality Gate + Doc Polish | 0/0 | Planned | — |
+| 13. Quality Gate + Doc Polish | 1/1 | Complete   | 2026-02-27 |
