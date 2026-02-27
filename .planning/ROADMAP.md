@@ -23,7 +23,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 9: Integration Polish** - Fix {phase_name} variable ambiguity + YOLO bead_format fallback
 - [x] **Phase 10: Cosmetic Cleanup** - loadConfig defaults, ROADMAP checkboxes, traceability table, dead code (completed 2026-02-26)
 - [x] **Phase 11: Orchestrator State Sync** - Wire cmdPhaseComplete into orchestrator, fix STATE.md staleness
-- [ ] **Phase 12: YOLO Time Budget Tracking** - Call record-bead in YOLO mode, fix estimate default
+- [x] **Phase 12: YOLO Time Budget Tracking** - Call record-bead in YOLO mode, fix estimate default (completed 2026-02-27)
 - [ ] **Phase 13: Quality Gate + Doc Polish** - Review re-run QUALITY_GATE_SUFFIX, PHASE_FILES, SKILL.md CLI table
 
 ## Phase Details
@@ -220,5 +220,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 9. Integration Polish | 2/2 | Complete | 2026-02-26 |
 | 10. Cosmetic Cleanup | 1/1 | Complete | 2026-02-26 |
 | 11. Orchestrator State Sync | 1/1 | Complete    | 2026-02-26 |
-| 12. YOLO Time Budget Tracking | 0/1 | Planned | — |
+| 12. YOLO Time Budget Tracking | 1/1 | Complete   | 2026-02-27 |
 | 13. Quality Gate + Doc Polish | 0/0 | Planned | — |
