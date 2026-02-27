@@ -31,7 +31,7 @@
 **Milestone Goal:** Add codemaps as shared context for research/review agents, and marathon mode as plan-all-then-execute alternative to per-phase flow.
 
 - [x] **Phase 14: Codemaps Foundation** - Codemap generation, selective injection per agent role, freshness detection, CLI commands (completed 2026-02-27)
-- [ ] **Phase 15: Marathon Mode Orchestration** - Marathon entry point, auto-approved planning chain, bead inventory gate, YOLO compatibility
+- [x] **Phase 15: Marathon Mode Orchestration** - Marathon entry point, auto-approved planning chain, bead inventory gate, YOLO compatibility (completed 2026-02-27)
 - [ ] **Phase 16: Integration Testing and Hardening** - End-to-end verification of codemaps + marathon interaction, edge cases, config lifecycle
 
 ## Phase Details
@@ -103,5 +103,5 @@ Plans:
 | 12. YOLO Time Budget | v1.0 | 1/1 | Complete | 2026-02-27 |
 | 13. Quality Gate + Doc | v1.0 | 1/1 | Complete | 2026-02-27 |
 | 14. Codemaps Foundation | 3/3 | Complete    | 2026-02-27 | - |
-| 15. Marathon Orchestration | 1/2 | In Progress|  | - |
+| 15. Marathon Orchestration | 2/2 | Complete   | 2026-02-27 | - |
 | 16. Integration Hardening | v1.1 | 0/1 | Not started | - |

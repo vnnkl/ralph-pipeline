@@ -2,13 +2,13 @@
 ralph_state_version: 1.0
 current_phase: 15
 total_phases: 16
-current_plan: 1
-status: Executing phase 15, plan 1 complete
-last_updated: "2026-02-27T15:56:00.000Z"
-last_activity: 2026-02-27 — Completed 15-01-PLAN.md (marathon skill entry point)
-progress_percent: 30
+current_plan: 2
+status: Phase 15 complete (all plans executed)
+last_updated: "2026-02-27T16:01:16.000Z"
+last_activity: 2026-02-27 — Completed 15-02-PLAN.md (bead inventory review gate)
+progress_percent: 100
 total_plans: 2
-completed_plans: 1
+completed_plans: 2
 ---
 
 # Project State
@@ -23,25 +23,25 @@ See: .planning/PROJECT.md (updated 2026-02-27)
 ## Current Position
 
 Phase: 15 of 16 (Marathon Mode Orchestration)
-Plan: 1 of 2 in current phase
-Status: Executing phase 15, plan 1 complete
-Last activity: 2026-02-27 — Completed 15-01-PLAN.md (marathon skill entry point)
+Plan: 2 of 2 in current phase
+Status: Phase 15 complete (all plans executed)
+Last activity: 2026-02-27 — Completed 15-02-PLAN.md (bead inventory review gate)
 
-Progress: [███░░░░░░░] 30%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 4
-- Average duration: 4min
-- Total execution time: 0.22 hours
+- Total plans completed: 5
+- Average duration: 3min
+- Total execution time: 0.25 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 14 - Codemaps Foundation | 3 | 8min | 3min |
-| 15 - Marathon Mode Orchestration | 1 | 5min | 5min |
+| 15 - Marathon Mode Orchestration | 2 | 7min | 4min |
 
 ## Accumulated Context
 
@@ -59,6 +59,10 @@ Progress: [███░░░░░░░] 30%
 - [15-01] Step 8 placeholder for bead review gate keeps MARATHON.md extensible
 - [15-01] No time-budget start during planning -- deferred to execute phase via config flag
 - [15-01] Clean .beads/ before convert prevents stale bead accumulation
+- [15-02] Complexity estimation via body line count with frontmatter override
+- [15-02] Reject loop re-enters at Step 2 -- scan-phases finds phase 6 incomplete naturally
+- [15-02] Config cleanup on ALL terminal stops except reject loop
+- [15-02] marathon_time_budget_hours preserved on stop for standard pipeline
 
 ### Pending Todos
 
@@ -78,4 +82,4 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-27
-Stopped at: Completed 15-01-PLAN.md (marathon skill entry point)
+Stopped at: Completed 15-02-PLAN.md (bead inventory review gate) -- Phase 15 complete

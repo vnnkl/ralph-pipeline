@@ -22,9 +22,9 @@ Requirements for marathon mode + codemaps integration. Each maps to roadmap phas
 
 - [x] **MARA-01**: User can invoke marathon mode via separate command entry point
 - [x] **MARA-02**: Marathon chains phases 1-7 with auto-approved gates and /clear between each
-- [ ] **MARA-03**: After Convert phase, marathon presents bead inventory review gate before execution
+- [x] **MARA-03**: After Convert phase, marathon presents bead inventory review gate before execution
 - [x] **MARA-04**: Marathon produces one merged bead queue from all planning phases (`.beads/` directory)
-- [ ] **MARA-05**: Marathon mode works with YOLO mode (auto-approve review gate)
+- [x] **MARA-05**: Marathon mode works with YOLO mode (auto-approve review gate)
 
 ## v1.2 Requirements
 
@@ -68,9 +68,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CMAP-08 | Phase 14 | Complete |
 | MARA-01 | Phase 15 | Complete |
 | MARA-02 | Phase 15 | Complete |
-| MARA-03 | Phase 15 | Pending |
+| MARA-03 | Phase 15 | Complete |
 | MARA-04 | Phase 15 | Complete |
-| MARA-05 | Phase 15 | Pending |
+| MARA-05 | Phase 15 | Complete |
 
 **Coverage:**
 - v1.1 requirements: 13 total
