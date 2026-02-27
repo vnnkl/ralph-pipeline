@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-02-27)
 
 Phase: 13 of 13 (all complete)
 Status: v1.0 milestone shipped
-Last activity: 2026-02-27 - Completed quick task 1: Execute stage should check project folder for bead completion evidence instead of only checking bead-results/ dir
+Last activity: 2026-02-27 - Completed quick task 2: Fix phase-complete PHASE_NOT_FOUND -- add ROADMAP.md fallback
 
 Progress: [██████████] 100%
 
@@ -54,6 +54,7 @@ None.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 1 | Execute stage should check project folder for bead completion evidence instead of only checking bead-results/ dir | 2026-02-27 | bf2a348 | [1-execute-stage-should-check-project-folde](./quick/1-execute-stage-should-check-project-folde/) |
+| 2 | Fix phase-complete PHASE_NOT_FOUND -- add ROADMAP.md fallback | 2026-02-27 | 294bc00 | [2-fix-phase-complete-phase-not-found-add-r](./quick/2-fix-phase-complete-phase-not-found-add-r/) |
 
 ## Session Continuity
 
