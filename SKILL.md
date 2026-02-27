@@ -384,7 +384,13 @@ This prevents the SessionStart hook from entering an infinite restart loop.
 | `preflight` | Pre-flight dependency checks (skills, MCP servers, CLIs, GSD reference) |
 | `setup-reference` | Copy GSD reference to .reference/ with version pinning |
 | `setup-gitignore <pattern>` | Add pattern to .gitignore (idempotent) |
+| `time-budget start <hours>` | Start a time budget. Sets absolute expiry timestamp in config.json. Example: `node ralph-tools.cjs time-budget start 4` |
+| `time-budget check` | Check budget status. Returns JSON: `has_budget`, `expired`, `remaining_ms`, `remaining_display`. Used at phase boundaries (Step 7a) |
+| `time-budget record-bead <ms>` | Record bead execution duration in milliseconds. Updates weighted running average for future estimates. Example: `node ralph-tools.cjs time-budget record-bead 120000` |
+| `time-budget estimate` | Estimate remaining beads within budget. Returns `estimated_beads_remaining`, `avg_bead_duration_ms`, `avg_bead_duration_display`. Uses recorded history or 20-min default on first run |
 | `help` | List all available commands |
+
+**YOLO mode** uses the same time-budget subcommands: `start` is called if `time_budget_hours` is pre-configured; `check` runs at phase boundaries; `record-bead` runs after each headless bead execution; `estimate` runs after budget check. No YOLO-specific subcommands exist.
 
 All commands accept `--cwd <path>` and `--raw` flags.
 
