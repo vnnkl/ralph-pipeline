@@ -41,7 +41,7 @@ EXEC_START_TIME=$(date +%s%3N)
 
 Read the pipeline mode:
 ```bash
-node ralph-tools.cjs config-get mode --raw
+node {{RALPH_TOOLS}} --cwd {{CWD}} config-get mode --raw
 ```
 
 If mode is "yolo":
@@ -64,15 +64,32 @@ Wait for the user's response.
 
 If the user chooses **Manual** (or "1" or "manual"):
 
-1. Show the ralph-tui launch command:
+1. Build the ralph-tui launch command:
+
+   Read the bead format from config:
+   ```bash
+   node {{RALPH_TOOLS}} --cwd {{CWD}} config-get bead_format --raw
    ```
-   To execute your beads interactively, run ralph-tui in your project directory:
 
-     ralph-tui
+   If format is "bd" or "br" (or null — default to beads tracker):
+   - Discover the most recent epic:
+     ```bash
+     bd list --type epic --sort created --json 2>/dev/null | head -1
+     ```
+     Parse JSON array, extract `id` from the first element.
+   - If epic found: `COMMAND="ralph-tui run --sequential --tracker beads --epic {EPIC_ID}"`
+   - If no epic found: `COMMAND="ralph-tui run --sequential --tracker beads"`
 
-   This will pick up the beads in .beads/ and let you execute them one by one with full visibility.
+   If format is "prd.json":
+   - `COMMAND="ralph-tui run --sequential --prd ./prd.json"`
 
-   When finished, signal back here with your results.
+   Show the command in a copyable block:
+   ```
+   Run this to execute your beads:
+
+     {COMMAND}
+
+   Signal back here when finished.
    ```
 
 2. Wait for the user to respond. They will signal when done.
@@ -84,7 +101,57 @@ If the user chooses **Manual** (or "1" or "manual"):
 
 4. If result files exist, aggregate them (skip to Step 5).
 
-5. If no result files exist, ask the user:
+5. If no result files exist, attempt to auto-detect completion from the bead tracker:
+
+   First, ensure the results directory exists:
+   ```bash
+   mkdir -p .claude/pipeline/bead-results
+   ```
+
+   Read the bead format from config:
+   ```bash
+   node {{RALPH_TOOLS}} --cwd {{CWD}} config-get bead_format --raw
+   ```
+
+   If format is "bd" or "br" (beads tracker formats):
+
+   a. Query closed beads from the tracker:
+      ```bash
+      bd list --status closed --json 2>/dev/null
+      ```
+
+   b. If the command succeeds and returns a non-empty JSON array:
+      - Parse the JSON array. Each element has `id` and `title` fields.
+      - Compare against the bead files discovered in Step 1 (from `.beads/` directory).
+        Match by checking if a bead filename (`{BEAD_NAME}.md`) corresponds to a closed issue title.
+        Use case-insensitive substring matching: a bead is "closed" if any closed issue title contains the bead name (with hyphens treated as spaces/separators).
+      - For each bead that matches a closed issue: create a result file at `.claude/pipeline/bead-results/{BEAD_NAME}.md` with:
+        ```yaml
+        ---
+        status: passed
+        bead: {BEAD_NAME}
+        executed: {current ISO8601 timestamp}
+        ---
+        ```
+      - For each bead that does NOT match any closed issue: create a result file with:
+        ```yaml
+        ---
+        status: failed
+        bead: {BEAD_NAME}
+        executed: {current ISO8601 timestamp}
+        ---
+        ```
+      - Log: "Auto-detected {N} closed beads from tracker, {M} still open"
+      - If ALL beads are accounted for (result files now exist for every bead), skip the user prompt and proceed to Step 7 (proceed to duration tracking).
+
+   c. If the `bd list` command fails (non-zero exit code) or returns empty/invalid JSON:
+      - Log: "Could not auto-detect bead status from tracker. Asking user."
+      - Fall through to point 6 (user prompt).
+
+   If format is "prd.json" or null:
+   - Fall through to point 6 (user prompt). prd.json format has no tracker to query.
+
+6. If no result files exist after auto-detection (or auto-detection was skipped), ask the user:
    ```
    No result files found in .claude/pipeline/bead-results/. How did execution go?
 
@@ -95,7 +162,7 @@ If the user chooses **Manual** (or "1" or "manual"):
    If "All passed": create result files for each bead with `status: passed`.
    If "Let me specify": ask the user to provide the status for each bead, then write result files accordingly.
 
-6. Proceed to Step 3a.1 (Manual Mode Duration Tracking).
+7. Proceed to Step 3a.1 (Manual Mode Duration Tracking).
 
 ### Step 3a.1: Manual Mode Duration Tracking
 
@@ -116,7 +183,7 @@ After manual result collection (Step 3a), compute per-bead durations from result
 
 5. For each computed duration (in milliseconds), call:
    ```bash
-   node ralph-tools.cjs time-budget record-bead $DURATION
+   node {{RALPH_TOOLS}} --cwd {{CWD}} time-budget record-bead $DURATION
    ```
    Skip any bead where the computed duration is zero or negative (indicates a timestamp issue).
 
@@ -211,7 +278,7 @@ For each bead:
    ```bash
    BEAD_END=$(date +%s%3N)
    BEAD_DURATION=$((BEAD_END - BEAD_START))
-   node ralph-tools.cjs time-budget record-bead $BEAD_DURATION
+   node {{RALPH_TOOLS}} --cwd {{CWD}} time-budget record-bead $BEAD_DURATION
    ```
 
 9. Report result:
@@ -250,7 +317,7 @@ After execution completes (all beads passed, or batch stopped on failure, or man
 
 Read the pipeline mode:
 ```bash
-node ralph-tools.cjs config-get mode --raw
+node {{RALPH_TOOLS}} --cwd {{CWD}} config-get mode --raw
 ```
 
 If mode is "yolo":
