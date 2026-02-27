@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-02-27)
 
 Phase: 13 of 13 (all complete)
 Status: v1.0 milestone shipped
-Last activity: 2026-02-27 — v1.0 milestone archived
+Last activity: 2026-02-27 - Completed quick task 1: Execute stage should check project folder for bead completion evidence instead of only checking bead-results/ dir
 
 Progress: [██████████] 100%
 
@@ -48,6 +48,12 @@ None.
 ### Blockers/Concerns
 
 None.
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 1 | Execute stage should check project folder for bead completion evidence instead of only checking bead-results/ dir | 2026-02-27 | bf2a348 | [1-execute-stage-should-check-project-folde](./quick/1-execute-stage-should-check-project-folde/) |
 
 ## Session Continuity
 
