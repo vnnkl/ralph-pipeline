@@ -18,6 +18,7 @@
  *   preflight                     Pre-flight dependency checks
  *   setup-reference               Copy GSD reference to .reference/ with version pinning
  *   setup-gitignore <pattern>     Add pattern to .gitignore
+ *   codemap <check|paths|age>     Codemap freshness detection and file management
  *   help                          List available commands
  */
 
@@ -32,6 +33,7 @@ const preflight = require('./lib/preflight.cjs');
 const init = require('./lib/init.cjs');
 const orchestrator = require('./lib/orchestrator.cjs');
 const timeBudget = require('./lib/time-budget.cjs');
+const codemap = require('./lib/codemap.cjs');
 
 // -- CLI Argument Parsing -----------------------------------------------------
 
@@ -295,6 +297,25 @@ function main() {
           break;
         default:
           error('Unknown time-budget subcommand: ' + sub, 'UNKNOWN_SUBCOMMAND');
+      }
+      break;
+    }
+
+    case 'codemap': {
+      const sub = args[1];
+      if (!sub) error('Usage: codemap <check|paths|age>', 'INVALID_ARGS');
+      switch (sub) {
+        case 'check':
+          codemap.cmdCodemapCheck(cwd);
+          break;
+        case 'paths':
+          codemap.cmdCodemapPaths(cwd);
+          break;
+        case 'age':
+          codemap.cmdCodemapAge(cwd);
+          break;
+        default:
+          error('Unknown codemap subcommand: ' + sub, 'UNKNOWN_SUBCOMMAND');
       }
       break;
     }
