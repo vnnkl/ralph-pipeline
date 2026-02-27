@@ -501,14 +501,40 @@ Enter the bead number or name.
 
 Wait for the user's response.
 
-Execute the selected bead using the same pattern from the execute phase:
+Before executing the bead, construct an augmented quality gate suffix:
+
+1. Read the bead file (`{{CWD}}/.beads/{BEAD_NAME}.md`) to identify which files it modifies (from its description, acceptance criteria, or file path references).
+
+2. Filter the P1 and P2 findings from the review output files (`review-security.md`, `review-architecture.md`, `review-simplicity.md`, `review-performance.md`) to only those whose file references overlap with files the bead works on. If no findings match, include ALL P1 and P2 findings as a fallback with the note: "Could not determine bead-specific findings. Showing all P1/P2 items."
+
+3. Write the combined suffix to a temp file using a heredoc with single-quoted delimiter to prevent variable expansion issues from special characters in findings:
 
 ```bash
-cat {{CWD}}/.beads/{BEAD_NAME}.md | env -u CLAUDECODE claude -p \
+cat > /tmp/bead-quality-suffix.txt << 'SUFFIX_EOF'
+
+---
+QUALITY GATES (mandatory before reporting success):
+1. If the project has a test suite, run the relevant tests. Your work is not complete until tests pass.
+2. If the project uses a typed language (TypeScript, Go, Rust, etc.), run the type checker. Your work is not complete until type checks pass.
+3. If both tests and type checks fail, fix the issues before reporting success.
+Your exit code MUST reflect the actual state: exit 0 only if your implementation is correct AND quality gates pass.
+
+---
+REVIEW FINDINGS (fix these issues from the previous review):
+{filtered P1/P2 findings with file references and fix suggestions}
+SUFFIX_EOF
+```
+
+4. Execute the bead with the augmented suffix piped in:
+
+```bash
+(cat "{{CWD}}/.beads/{BEAD_NAME}.md"; cat /tmp/bead-quality-suffix.txt) | env -u CLAUDECODE claude -p \
   --allowedTools "Read,Edit,Bash,Grep,Glob,Write" \
   --output-format json \
   --dangerously-skip-permissions
 ```
+
+IMPORTANT: The `{filtered P1/P2 findings...}` placeholder is instructions for the review orchestrator agent to fill in at runtime -- it is NOT a bash variable. The heredoc uses single-quoted `'SUFFIX_EOF'` to prevent bash expansion.
 
 Capture the exit code. Update the result file in `.claude/pipeline/bead-results/{BEAD_NAME}.md` with the new status and timestamp.
 
