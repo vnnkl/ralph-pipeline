@@ -28,9 +28,17 @@ Context isolation through `/clear` between phases combined with ralph-tui's abil
 
 ### Active
 
-- [ ] Harvest phase (/choo-choo-ralph): extract reusable patterns from completed work
-- [ ] Codemaps integration: use as shared context for research and review agents
-- [ ] Multi-phase batching: batch multiple phases into single overnight run
+- [ ] Codemaps integration: /gsd:map-codebase output as shared context — run before research/PRD, refresh after execution for review agents
+- [ ] Marathon mode: separate command that plans ALL phases upfront, merges into one bead queue, executes in single run — time budget applies to execution only
+
+## Current Milestone: v1.1 Marathon Mode + Codemaps
+
+**Goal:** Add marathon mode (plan-all-then-execute) as alternative to per-phase flow, and integrate codemaps as shared context for research and review agents.
+
+**Target features:**
+- Marathon mode command: upfront discussion + planning for all phases, one merged bead queue, single execution run
+- Codemaps integration: map codebase before research/PRD, refresh after execution for review agents
+- Time budget scoping: budget applies to execution only, not planning phases
 
 ### Out of Scope
 
@@ -38,6 +46,7 @@ Context isolation through `/clear` between phases combined with ralph-tui's abil
 - Reusing gsd-tools.cjs directly — build ralph-tools.cjs purpose-built
 - Real-time dashboard / live streaming — ralph-tui's TUI handles execution visibility
 - Compiled npm dependencies — breaks zero-dep constraint
+- Harvest phase (/choo-choo-ralph) — deferred to v1.2
 
 ## Context
 
@@ -71,4 +80,4 @@ Known gap: `/frontend-design` skill referenced but not yet created (external dep
 | 4 iterative milestone audits | Systematic convergence: each audit drives gap-closure phases | ✓ Good |
 
 ---
-*Last updated: 2026-02-27 after v1.0 milestone*
+*Last updated: 2026-02-27 after v1.1 milestone start*

@@ -1,14 +1,14 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: ralph-pipeline
-status: shipped
+milestone: v1.1
+milestone_name: Marathon Mode + Codemaps
+status: active
 last_updated: "2026-02-27"
 progress:
-  total_phases: 13
-  completed_phases: 13
-  total_plans: 26
-  completed_plans: 26
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
@@ -18,22 +18,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-27)
 
 **Core value:** Context isolation through /clear between phases combined with ralph-tui's ability to execute large batches of work unattended
-**Current focus:** v1.0 shipped — planning next milestone
+**Current focus:** Defining requirements for v1.1
 
 ## Current Position
 
-Phase: 13 of 13 (all complete)
-Status: v1.0 milestone shipped
-Last activity: 2026-02-27 - Completed quick task 2: Fix phase-complete PHASE_NOT_FOUND -- add ROADMAP.md fallback
-
-Progress: [██████████] 100%
-
-## Performance Metrics
-
-**Velocity:**
-- Total plans completed: 26
-- Average duration: 3min
-- Total execution time: 1.13 hours
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-27 — Milestone v1.1 started
 
 ## Accumulated Context
 
@@ -59,4 +51,4 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-27
-Stopped at: v1.0 milestone completed and archived
+Stopped at: Milestone v1.1 initialized — defining requirements
